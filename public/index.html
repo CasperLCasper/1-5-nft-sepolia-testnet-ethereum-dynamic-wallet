@@ -550,15 +550,15 @@
       const tokenId = Math.floor(Math.random() * 1000000);
       const contract = new ethers.Contract(MANIFOLD_CONTRACT_ADDRESS, MANIFOLD_ABI, signer);
       try {
-        const tx = await contract.mint(account, tokenId, metadataURI, { value: ethers.parseEther("0.01"), gasLimit: 300000 });
+        const tx = await contract.mint(account, tokenId, metadataURI, { value: ethers.parseEther("0.01"), gasLimit: 600000 });
         return await tx.wait();
       } catch (e) {
         try {
-          const tx = await contract.mintWithETH(account, tokenId, metadataURI, { value: ethers.parseEther("0.01"), gasLimit: 300000 });
+          const tx = await contract.mintWithETH(account, tokenId, metadataURI, { value: ethers.parseEther("0.01"), gasLimit: 600000 });
           return await tx.wait();
         } catch (e2) {
           try {
-            const tx = await contract.purchase(tokenId, metadataURI, { value: ethers.parseEther("0.01"), gasLimit: 300000 });
+            const tx = await contract.purchase(tokenId, metadataURI, { value: ethers.parseEther("0.01"), gasLimit: 600000 });
             return await tx.wait();
           } catch (e3) { throw new Error(`All mint methods failed: ${e3.message}`); }
         }
