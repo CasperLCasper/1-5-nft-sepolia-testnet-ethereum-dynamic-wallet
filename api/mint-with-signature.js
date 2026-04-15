@@ -38,7 +38,7 @@ export default async function handler(req, res) {
         to: contractAddress,
         data: data,
         value: ethers.parseEther("0.01").toString(),
-        gasLimit: "300000"
+        gasLimit: "600000"
       }
     });
     
