@@ -1,0 +1,18 @@
+{
+  "name": "wallet-visualizer",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "pinata": "^2.1.0",
+    "ethers": "^6.10.0"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev",
+    "build": "echo 'No build step needed'"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
