@@ -397,15 +397,22 @@
         else { button.classList.remove('loading'); button.disabled = false; } 
       },
       
-      // Tēmas
+      // Tēmas - ATJAUNINĀTAS AR frameCount ATBALSTU
       ADDON_STYLES: {
-        classic: { name: 'CLASSIC', displayName: '⭐ CLASSIC', color: '#0ff',
-          particleColorModifier: (hue, sat, light, idx, balanceFactor) => ({ hue, sat, light }),
+        classic: { 
+          name: 'CLASSIC', displayName: '⭐ CLASSIC', color: '#0ff',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ hue, sat, light }),
           drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => {},
-          connectionColorModifier: (hue, sat, light, alpha) => ({ hue, sat, light, alpha }),
-          indicatorText: '⭐ CLASSIC MODE - Original visualization' },
-        forest: { name: 'FOREST', displayName: '🌲 FOREST', color: '#0f0',
-          particleColorModifier: (hue, sat, light, idx, balanceFactor) => ({ hue: (hue + 120) % 360, sat: Math.min(100, sat + 20), light: light - 10 }),
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ hue, sat, light, alpha }),
+          indicatorText: '⭐ CLASSIC MODE - Original visualization' 
+        },
+        forest: { 
+          name: 'FOREST', displayName: '🌲 FOREST', color: '#0f0',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ 
+            hue: (hue + 120) % 360, 
+            sat: Math.min(100, sat + 20), 
+            light: light - 10 
+          }),
           drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => {
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
@@ -419,10 +426,21 @@
             });
             ctx.restore();
           },
-          connectionColorModifier: (hue, sat, light, alpha) => ({ hue: (hue + 120) % 360, sat: Math.min(100, sat + 20), light: light - 10, alpha: alpha * 0.8 }),
-          indicatorText: '🌲 FOREST MODE - Green glow effect active' },
-        ocean: { name: 'OCEAN', displayName: '🌊 OCEAN', color: '#00f',
-          particleColorModifier: (hue, sat, light, idx, balanceFactor) => ({ hue: (hue + 200) % 360, sat: Math.min(100, sat + 15), light: light + 5 }),
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ 
+            hue: (hue + 120) % 360, 
+            sat: Math.min(100, sat + 20), 
+            light: light - 10, 
+            alpha: alpha * 0.8 
+          }),
+          indicatorText: '🌲 FOREST MODE - Green glow effect active' 
+        },
+        ocean: { 
+          name: 'OCEAN', displayName: '🌊 OCEAN', color: '#00f',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ 
+            hue: (hue + 200) % 360, 
+            sat: Math.min(100, sat + 15), 
+            light: light + 5 
+          }),
           drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => {
             ctx.save();
             ctx.globalAlpha = 0.25;
@@ -434,10 +452,21 @@
             }
             ctx.restore();
           },
-          connectionColorModifier: (hue, sat, light, alpha) => ({ hue: (hue + 200) % 360, sat: Math.min(100, sat + 15), light: light + 5, alpha: alpha * 0.9 }),
-          indicatorText: '🌊 OCEAN MODE - Wave animations active' },
-        sunset: { name: 'SUNSET', displayName: '🌅 SUNSET', color: '#ff6600',
-          particleColorModifier: (hue, sat, light, idx, balanceFactor) => ({ hue: (hue + 30) % 360, sat: Math.min(100, sat + 25), light: light + 15 }),
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ 
+            hue: (hue + 200) % 360, 
+            sat: Math.min(100, sat + 15), 
+            light: light + 5, 
+            alpha: alpha * 0.9 
+          }),
+          indicatorText: '🌊 OCEAN MODE - Wave animations active' 
+        },
+        sunset: { 
+          name: 'SUNSET', displayName: '🌅 SUNSET', color: '#ff6600',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ 
+            hue: (hue + 30) % 360, 
+            sat: Math.min(100, sat + 25), 
+            light: light + 15 
+          }),
           drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => {
             ctx.save();
             const gradient = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, 350);
@@ -448,10 +477,21 @@
             ctx.fillRect(0, 0, W, H);
             ctx.restore();
           },
-          connectionColorModifier: (hue, sat, light, alpha) => ({ hue: (hue + 30) % 360, sat: Math.min(100, sat + 25), light: light + 15, alpha: alpha * 1.1 }),
-          indicatorText: '🌅 SUNSET MODE - Warm fire glow active' },
-        galaxy: { name: 'GALAXY', displayName: '✨ GALAXY', color: '#c026ff',
-          particleColorModifier: (hue, sat, light, idx, balanceFactor) => ({ hue: (hue + 280) % 360, sat: Math.min(100, sat + 30), light: light + 10 }),
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ 
+            hue: (hue + 30) % 360, 
+            sat: Math.min(100, sat + 25), 
+            light: light + 15, 
+            alpha: alpha * 1.1 
+          }),
+          indicatorText: '🌅 SUNSET MODE - Warm fire glow active' 
+        },
+        galaxy: { 
+          name: 'GALAXY', displayName: '✨ GALAXY', color: '#c026ff',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ 
+            hue: (hue + 280) % 360, 
+            sat: Math.min(100, sat + 30), 
+            light: light + 10 
+          }),
           drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => {
             ctx.save();
             for(let i = 0; i < 60; i++) {
@@ -464,10 +504,21 @@
             }
             ctx.restore();
           },
-          connectionColorModifier: (hue, sat, light, alpha) => ({ hue: (hue + 280) % 360, sat: Math.min(100, sat + 30), light: light + 10, alpha: alpha * 0.85 }),
-          indicatorText: '✨ GALAXY MODE - Sparkle stars active' },
-        rainbow: { name: 'RAINBOW', displayName: '🌈 RAINBOW', color: '#ff00ff',
-          particleColorModifier: (hue, sat, light, idx, balanceFactor) => ({ hue: (hue + idx * 15 + this.frameCount * 2) % 360, sat: 100, light: 70 }),
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ 
+            hue: (hue + 280) % 360, 
+            sat: Math.min(100, sat + 30), 
+            light: light + 10, 
+            alpha: alpha * 0.85 
+          }),
+          indicatorText: '✨ GALAXY MODE - Sparkle stars active' 
+        },
+        rainbow: { 
+          name: 'RAINBOW', displayName: '🌈 RAINBOW', color: '#ff00ff',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ 
+            hue: (hue + idx * 15 + frameCount * 2) % 360, 
+            sat: 100, 
+            light: 70 
+          }),
           drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => {
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
@@ -482,10 +533,21 @@
             });
             ctx.restore();
           },
-          connectionColorModifier: (hue, sat, light, alpha) => ({ hue: (hue + this.frameCount * 2) % 360, sat: 100, light: 70, alpha: alpha * 0.7 }),
-          indicatorText: '🌈 RAINBOW MODE - Color pulse active' },
-        fire: { name: 'FIRE', displayName: '🔥 FIRE', color: '#ff4400',
-          particleColorModifier: (hue, sat, light, idx, balanceFactor) => ({ hue: (hue + 15) % 360, sat: Math.min(100, sat + 40), light: light + 20 }),
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ 
+            hue: (hue + frameCount * 2) % 360, 
+            sat: 100, 
+            light: 70, 
+            alpha: alpha * 0.7 
+          }),
+          indicatorText: '🌈 RAINBOW MODE - Color pulse active' 
+        },
+        fire: { 
+          name: 'FIRE', displayName: '🔥 FIRE', color: '#ff4400',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ 
+            hue: (hue + 15) % 360, 
+            sat: Math.min(100, sat + 40), 
+            light: light + 20 
+          }),
           drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => {
             ctx.save();
             ctx.globalCompositeOperation = 'screen';
@@ -503,8 +565,14 @@
             });
             ctx.restore();
           },
-          connectionColorModifier: (hue, sat, light, alpha) => ({ hue: (hue + 15) % 360, sat: Math.min(100, sat + 40), light: light + 20, alpha: alpha * 1.2 }),
-          indicatorText: '🔥 FIRE MODE - Fire trail effects active' }
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ 
+            hue: (hue + 15) % 360, 
+            sat: Math.min(100, sat + 40), 
+            light: light + 20, 
+            alpha: alpha * 1.2 
+          }),
+          indicatorText: '🔥 FIRE MODE - Fire trail effects active' 
+        }
       },
       
       setAddonStyle(styleName) {
@@ -565,7 +633,6 @@
       // API CALLS - IZMANTO SDK_SETTINGS
       // ============================================ //
       
-      // Alchemy URL veidošana no SDK_SETTINGS
       getAlchemyUrl() {
         return `https://${SDK_SETTINGS.alchemyNetwork}.g.alchemy.com/v2/${SDK_SETTINGS.alchemyKey}`;
       },
@@ -574,7 +641,6 @@
         if (!this.account) return [];
         this.showProgress();
         try {
-          // Izmanto SDK_SETTINGS endpointu
           const url = `${SDK_SETTINGS.getTokensEndpoint}?account=${encodeURIComponent(this.account)}`;
           const res = await fetch(url);
           if (!res.ok) return [];
@@ -593,7 +659,6 @@
         if (!this.account) return [];
         this.showProgress();
         try {
-          // Izmanto SDK_SETTINGS endpointu
           const url = `${SDK_SETTINGS.getNFTsEndpoint}?account=${encodeURIComponent(this.account)}`;
           const res = await fetch(url);
           if (!res.ok) return [];
@@ -623,7 +688,6 @@
             this.signer = await this.provider.getSigner();
             this.account = await this.signer.getAddress();
             
-            // Pārbauda tīklu
             const network = await this.provider.getNetwork();
             const expectedNetwork = SDK_SETTINGS.network === 'sepolia' ? 11155111n : 1n;
             if (network.chainId !== expectedNetwork) {
@@ -644,12 +708,10 @@
       // IPFS UPLOAD - AR CUSTOM UPLOADER ATBALSTU
       // ============================================ //
       async uploadFileToIPFS(file) {
-        // Ja DEV ir definējis custom uploader, izmanto to
         if (SDK_SETTINGS.customUploader && typeof SDK_SETTINGS.customUploader === 'function') {
           return await SDK_SETTINGS.customUploader(file);
         }
         
-        // Default - izmanto backend endpointu
         const formData = new FormData();
         formData.append('file', file);
         const response = await fetch(SDK_SETTINGS.ipfsEndpoint, { method: 'POST', body: formData });
@@ -658,7 +720,6 @@
       },
       
       async uploadMetadataToIPFS(metadata) {
-        // Ja DEV ir definējis custom uploader metadatam
         if (SDK_SETTINGS.customMetadataUploader && typeof SDK_SETTINGS.customMetadataUploader === 'function') {
           return await SDK_SETTINGS.customMetadataUploader(metadata);
         }
@@ -763,7 +824,6 @@
           this.showIPFSPreview(imageResult, videoResult, metadataResult);
           this.setProgress(100);
           
-          // Šeit būs mint ar kontraktu (sagatavots)
           this.showToast('✅ Files uploaded to IPFS! Ready for minting.', 'success');
           alert(`✅ Files uploaded to IPFS!\n\nImage: ${imageResult.http}\nVideo: ${videoResult ? videoResult.http : 'N/A'}\nMetadata: ${metadataResult.http}\n\nMint fee: ${SDK_SETTINGS.mintFee} ETH`);
           
@@ -778,7 +838,7 @@
       },
       
       // ============================================ //
-      // VIZUALIZĀCIJA
+      // VIZUALIZĀCIJA - AR ATJAUNINĀTĀM TĒMĀM
       // ============================================ //
       async initParticlesOnce() {
         this.initialParticles = [];
@@ -834,7 +894,8 @@
               const txFactor = Math.log(this.txCount + 1) / 10;
               let hue = (p1.hue + p2.hue) / 2 + frame * 0.4 * txFactor;
               let sat = 100, light = 70;
-              const modified = addon.connectionColorModifier(hue, sat, light, alpha);
+              // PADOD frameCount connectionColorModifier
+              const modified = addon.connectionColorModifier(hue, sat, light, alpha, this.frameCount);
               ctx.strokeStyle = `hsla(${modified.hue}, ${modified.sat}%, ${modified.light}%, ${modified.alpha})`;
               ctx.beginPath();
               ctx.moveTo(x1, y1);
@@ -848,7 +909,8 @@
           p.angle += p.speed;
           const cx = cx0 + Math.cos(p.angle) * p.radius;
           const cy = cy0 + Math.sin(p.angle) * p.radius;
-          const modified = addon.particleColorModifier(p.hue, 100, 70, idx, p.balanceFactor);
+          // PADOD frameCount particleColorModifier
+          const modified = addon.particleColorModifier(p.hue, 100, 70, idx, p.balanceFactor, this.frameCount);
           const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, p.r * 2.5);
           gradient.addColorStop(0, `hsla(${modified.hue}, ${modified.sat}%, ${modified.light + 10}%, 1)`);
           gradient.addColorStop(0.5, `hsla(${modified.hue}, ${modified.sat}%, ${modified.light}%, 0.9)`);
