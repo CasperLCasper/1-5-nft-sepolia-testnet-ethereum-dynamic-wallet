@@ -234,7 +234,74 @@
 
   <script>
     // ============================================ //
-    // APP OBJECT - Iekapsulēšana
+    // SDK KONFIGURĀCIJAS BLOKS - Šeit DEV vēlāk ierakstīs savus datus
+    // ============================================ //
+    const SDK_SETTINGS = {
+      // Alchemy (tokenu un NFT iegūšanai)
+      alchemyKey: "YOUR_ALCHEMY_API_KEY",        // 🔧 IEVADI SAVU ALCHEMY ATSLĒGU
+      alchemyNetwork: "eth-sepolia",              // Tīkls: eth-mainnet, eth-sepolia, etc.
+      
+      // Manifold kontrakts (pagaidām nav aktīvs, sagatavots nākotnei)
+      manifoldContract: "0x0000000000000000000000000000000000000000",
+      
+      // IPFS konfigurācija
+      ipfsEndpoint: "/api/uploadToIPFS",          // Tavs backend IPFS endpoints
+      ipfsMetadataEndpoint: "/api/uploadMetadataToIPFS",
+      
+      // Custom IPFS uploader (ja DEV grib izmantot savu risinājumu)
+      customUploader: null,                       // Piemēram: async (file) => { return await myCustomUpload(file); }
+      
+      // Tīkla un maksas iestatījumi
+      network: "sepolia",
+      mintFee: "0.01",                           // NFT mint maksa (ETH)
+      
+      // API endpointi tokenu un NFT iegūšanai
+      getTokensEndpoint: "/api/getTokens",
+      getNFTsEndpoint: "/api/getAllNFTs"
+    };
+
+    // ============================================ //
+    // UI ELEMENTU KARTE - Visi ID vienuviet
+    // ============================================ //
+    const UI = {
+      // Pogu ID
+      connectBtn: document.getElementById('connectBtn'),
+      renderBtn: document.getElementById('renderBtn'),
+      recordBtn: document.getElementById('recordBtn'),
+      generateNFTBtn: document.getElementById('generateNFTBtn'),
+      
+      // Displeji un statusi
+      accountDisplay: document.getElementById('accountDisplay'),
+      recordTimer: document.getElementById('recordTimer'),
+      statusMsg: document.getElementById('statusMsg'),
+      
+      // Progress
+      progressBarContainer: document.getElementById('progressBarContainer'),
+      progressBar: document.getElementById('progressBar'),
+      
+      // Konteineri
+      tokenListContainer: document.getElementById('tokenListContainer'),
+      tokenListContent: document.getElementById('tokenListContent'),
+      ipfsPreview: document.getElementById('ipfsPreview'),
+      previewImage: document.getElementById('previewImage'),
+      previewVideo: document.getElementById('previewVideo'),
+      previewMetadata: document.getElementById('previewMetadata'),
+      
+      // Indikatori
+      styleIndicator: document.getElementById('styleIndicator'),
+      indicatorText: document.getElementById('indicatorText'),
+      warningBanner: document.getElementById('warningBanner'),
+      
+      // Canvas
+      canvas: document.getElementById('snapshotCanvas'),
+      
+      // Ikonas
+      fullscreenIcon: document.getElementById('fullscreenIcon'),
+      toggleInfoIcon: document.getElementById('toggleInfoIcon')
+    };
+
+    // ============================================ //
+    // APP OBJECT
     // ============================================ //
     const App = {
       // State
@@ -252,33 +319,10 @@
       frameCount: 0,
       isRecording: false,
       
-      // NFT dati (saglabāti, bet vēlāk izmantos)
+      // NFT dati
       lastImageURL: null,
       lastVideoURL: null,
       lastMetadataURL: null,
-      recordedVideoBlob: null,
-      
-      // DOM elementi
-      canvas: null,
-      ctx: null,
-      connectBtn: null,
-      renderBtn: null,
-      recordBtn: null,
-      generateNFTBtn: null,
-      accountDisplay: null,
-      recordTimer: null,
-      statusMsg: null,
-      progressBarContainer: null,
-      progressBar: null,
-      tokenListContainer: null,
-      tokenListContent: null,
-      ipfsPreview: null,
-      previewImage: null,
-      previewVideo: null,
-      previewMetadata: null,
-      styleIndicator: null,
-      indicatorText: null,
-      warningBanner: null,
       
       // Mobilā optimizācija
       getCanvasDimensions() {
@@ -299,13 +343,14 @@
         const { width, height, dpr, isMobile } = this.getCanvasDimensions();
         const scale = isMobile ? 0.5 : 1;
         
-        this.canvas.width = Math.round(width * scale);
-        this.canvas.height = Math.round(height * scale);
-        this.canvas.style.width = '100%';
-        this.canvas.style.height = 'auto';
+        UI.canvas.width = Math.round(width * scale);
+        UI.canvas.height = Math.round(height * scale);
+        UI.canvas.style.width = '100%';
+        UI.canvas.style.height = 'auto';
         
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        this.ctx.scale(dpr * scale, dpr * scale);
+        const ctx = UI.canvas.getContext('2d');
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr * scale, dpr * scale);
       },
       
       cleanup() {
@@ -315,36 +360,37 @@
         }
         this.particles = [];
         this.initialParticles = [];
-        if (this.ctx) {
-          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        const ctx = UI.canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, UI.canvas.width, UI.canvas.height);
         }
       },
       
       showWarning(message, show = true) {
-        if (this.warningBanner) {
-          this.warningBanner.textContent = message;
+        if (UI.warningBanner) {
+          UI.warningBanner.textContent = message;
           if (show) {
-            this.warningBanner.classList.add('show');
+            UI.warningBanner.classList.add('show');
           } else {
-            this.warningBanner.classList.remove('show');
+            UI.warningBanner.classList.remove('show');
           }
         }
       },
       
       showToast(message, type = 'info') {
-        this.statusMsg.textContent = message;
+        UI.statusMsg.textContent = message;
         console.log(`[${type}] ${message}`);
       },
       
-      showProgress() { this.progressBarContainer.style.display = 'block'; this.progressBar.style.transform = 'scaleX(0)'; },
+      showProgress() { UI.progressBarContainer.style.display = 'block'; UI.progressBar.style.transform = 'scaleX(0)'; },
       hideProgress() { 
-        this.progressBar.style.transform = 'scaleX(1)'; 
+        UI.progressBar.style.transform = 'scaleX(1)'; 
         setTimeout(() => { 
-          this.progressBarContainer.style.display = 'none'; 
-          this.progressBar.style.transform = 'scaleX(0)'; 
+          UI.progressBarContainer.style.display = 'none'; 
+          UI.progressBar.style.transform = 'scaleX(0)'; 
         }, 500); 
       },
-      setProgress(percent) { this.progressBar.style.transform = `scaleX(${percent / 100})`; },
+      setProgress(percent) { UI.progressBar.style.transform = `scaleX(${percent / 100})`; },
       
       setButtonLoading(button, isLoading) { 
         if (isLoading) { button.classList.add('loading'); button.disabled = true; } 
@@ -464,10 +510,10 @@
       setAddonStyle(styleName) {
         this.currentAddonStyle = styleName;
         const style = this.ADDON_STYLES[styleName];
-        this.styleIndicator.style.borderLeftColor = style.color;
-        this.indicatorText.innerHTML = style.indicatorText;
-        this.styleIndicator.style.transform = 'scale(1.05)';
-        setTimeout(() => { this.styleIndicator.style.transform = 'scale(1)'; }, 300);
+        UI.styleIndicator.style.borderLeftColor = style.color;
+        UI.indicatorText.innerHTML = style.indicatorText;
+        UI.styleIndicator.style.transform = 'scale(1.05)';
+        setTimeout(() => { UI.styleIndicator.style.transform = 'scale(1)'; }, 300);
         if (this.initialParticles.length > 0 && this.animRequest) {
           this.stopAnimation();
           this.particles = this.cloneParticles();
@@ -488,10 +534,10 @@
       
       updateTokenListUI() {
         if(!this.tokens || this.tokens.length === 0){ 
-          this.tokenListContent.innerHTML = '<tr><td colspan="2" style="color:#777;">No assets<\/td><\/tr>'; 
+          UI.tokenListContent.innerHTML = '<tr><td colspan="2" style="color:#777;">No assets<\/td><\/tr>'; 
           return; 
         }
-        this.tokenListContent.innerHTML = '';
+        UI.tokenListContent.innerHTML = '';
         this.tokens.forEach(t => {
           const tr = document.createElement('tr');
           const addrTd = document.createElement('td'); 
@@ -500,26 +546,37 @@
           const balTd = document.createElement('td'); 
           balTd.textContent = t.isNFT ? t.balance : t.balance.toFixed(4);
           tr.appendChild(addrTd); tr.appendChild(balTd);
-          this.tokenListContent.appendChild(tr);
+          UI.tokenListContent.appendChild(tr);
         });
       },
       
       showIPFSPreview(imageURL, videoURL, metadataURL) {
-        this.previewImage.innerHTML = ''; 
-        this.previewVideo.innerHTML = ''; 
-        this.previewMetadata.innerHTML = '';
-        if (imageURL) this.previewImage.innerHTML = `🖼️ Image: <a href="${imageURL.http}" target="_blank">${imageURL.ipfs}</a>`;
-        if (videoURL) this.previewVideo.innerHTML = `🎬 Video: <a href="${videoURL.http}" target="_blank">${videoURL.ipfs}</a>`;
-        if (metadataURL) this.previewMetadata.innerHTML = `📄 Metadata: <a href="${metadataURL.http}" target="_blank">${metadataURL.ipfs}</a>`;
-        this.ipfsPreview.style.display = 'block';
-        setTimeout(() => { this.ipfsPreview.style.display = 'none'; }, 10000);
+        UI.previewImage.innerHTML = ''; 
+        UI.previewVideo.innerHTML = ''; 
+        UI.previewMetadata.innerHTML = '';
+        if (imageURL) UI.previewImage.innerHTML = `🖼️ Image: <a href="${imageURL.http}" target="_blank">${imageURL.ipfs}</a>`;
+        if (videoURL) UI.previewVideo.innerHTML = `🎬 Video: <a href="${videoURL.http}" target="_blank">${videoURL.ipfs}</a>`;
+        if (metadataURL) UI.previewMetadata.innerHTML = `📄 Metadata: <a href="${metadataURL.http}" target="_blank">${metadataURL.ipfs}</a>`;
+        UI.ipfsPreview.style.display = 'block';
+        setTimeout(() => { UI.ipfsPreview.style.display = 'none'; }, 10000);
+      },
+      
+      // ============================================ //
+      // API CALLS - IZMANTO SDK_SETTINGS
+      // ============================================ //
+      
+      // Alchemy URL veidošana no SDK_SETTINGS
+      getAlchemyUrl() {
+        return `https://${SDK_SETTINGS.alchemyNetwork}.g.alchemy.com/v2/${SDK_SETTINGS.alchemyKey}`;
       },
       
       async getTokens() {
         if (!this.account) return [];
         this.showProgress();
         try {
-          const res = await fetch(`/api/getTokens?account=${encodeURIComponent(this.account)}`);
+          // Izmanto SDK_SETTINGS endpointu
+          const url = `${SDK_SETTINGS.getTokensEndpoint}?account=${encodeURIComponent(this.account)}`;
+          const res = await fetch(url);
           if (!res.ok) return [];
           const data = await res.json();
           if (!data?.result?.tokenBalances) return [];
@@ -536,7 +593,9 @@
         if (!this.account) return [];
         this.showProgress();
         try {
-          const res = await fetch(`/api/getAllNFTs?account=${encodeURIComponent(this.account)}`);
+          // Izmanto SDK_SETTINGS endpointu
+          const url = `${SDK_SETTINGS.getNFTsEndpoint}?account=${encodeURIComponent(this.account)}`;
+          const res = await fetch(url);
           if (!res.ok) return [];
           const data = await res.json();
           let nfts = [];
@@ -555,7 +614,7 @@
       },
       
       async connectWallet() {
-        this.setButtonLoading(this.connectBtn, true);
+        this.setButtonLoading(UI.connectBtn, true);
         this.showProgress();
         try {
           if (window.ethereum) {
@@ -563,40 +622,73 @@
             await this.provider.send("eth_requestAccounts", []);
             this.signer = await this.provider.getSigner();
             this.account = await this.signer.getAddress();
+            
+            // Pārbauda tīklu
+            const network = await this.provider.getNetwork();
+            const expectedNetwork = SDK_SETTINGS.network === 'sepolia' ? 11155111n : 1n;
+            if (network.chainId !== expectedNetwork) {
+              this.showToast(`Please switch to ${SDK_SETTINGS.network} network!`, 'warning');
+            }
           } else { alert('Please install MetaMask!'); return; }
-          this.accountDisplay.textContent = 'Connected account: ' + this.account;
+          UI.accountDisplay.textContent = 'Connected account: ' + this.account;
           const balance = await this.provider.getBalance(this.account);
           this.ethBalance = Number(ethers.formatEther(balance));
-          this.renderBtn.disabled = false;
-          this.recordBtn.disabled = false;
-          this.generateNFTBtn.disabled = false;
-          this.statusMsg.textContent = 'Wallet connected';
+          UI.renderBtn.disabled = false;
+          UI.recordBtn.disabled = false;
+          UI.generateNFTBtn.disabled = false;
           this.showToast('Wallet connected successfully!', 'success');
-        } catch (err) { console.error(err); this.statusMsg.textContent = 'Connection failed'; alert('Wallet connection failed'); } finally { this.setButtonLoading(this.connectBtn, false); this.hideProgress(); }
+        } catch (err) { console.error(err); this.showToast('Connection failed', 'error'); } finally { this.setButtonLoading(UI.connectBtn, false); this.hideProgress(); }
       },
       
+      // ============================================ //
+      // IPFS UPLOAD - AR CUSTOM UPLOADER ATBALSTU
+      // ============================================ //
       async uploadFileToIPFS(file) {
+        // Ja DEV ir definējis custom uploader, izmanto to
+        if (SDK_SETTINGS.customUploader && typeof SDK_SETTINGS.customUploader === 'function') {
+          return await SDK_SETTINGS.customUploader(file);
+        }
+        
+        // Default - izmanto backend endpointu
         const formData = new FormData();
         formData.append('file', file);
-        const response = await fetch('/api/uploadToIPFS', { method: 'POST', body: formData });
+        const response = await fetch(SDK_SETTINGS.ipfsEndpoint, { method: 'POST', body: formData });
         if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
         return await response.json();
       },
       
+      async uploadMetadataToIPFS(metadata) {
+        // Ja DEV ir definējis custom uploader metadatam
+        if (SDK_SETTINGS.customMetadataUploader && typeof SDK_SETTINGS.customMetadataUploader === 'function') {
+          return await SDK_SETTINGS.customMetadataUploader(metadata);
+        }
+        
+        const response = await fetch(SDK_SETTINGS.ipfsMetadataEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metadata })
+        });
+        if (!response.ok) throw new Error(`Metadata upload failed: ${response.status}`);
+        return await response.json();
+      },
+      
       async uploadImageToIPFS() {
-        this.statusMsg.textContent = 'Converting image...';
+        this.showToast('Converting image...', 'info');
         return new Promise((resolve, reject) => {
-          this.canvas.toBlob(async (blob) => {
+          UI.canvas.toBlob(async (blob) => {
             if (!blob) { reject(new Error('Failed to convert canvas')); return; }
             const file = new File([blob], `snapshot_${Date.now()}.jpg`, { type: 'image/jpeg' });
-            try { this.statusMsg.textContent = 'Uploading image to IPFS...'; resolve(await this.uploadFileToIPFS(file)); } catch (error) { reject(error); }
+            try { 
+              this.showToast('Uploading image to IPFS...', 'info'); 
+              resolve(await this.uploadFileToIPFS(file)); 
+            } catch (error) { reject(error); }
           }, 'image/jpeg', 0.85);
         });
       },
       
       async uploadVideoToIPFS(duration = 5000) {
-        this.statusMsg.textContent = 'Recording video...';
-        const stream = this.canvas.captureStream(30);
+        this.showToast('Recording video...', 'info');
+        const stream = UI.canvas.captureStream(30);
         let mimeType = 'video/mp4';
         if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
         const recorder = new MediaRecorder(stream, { mimeType });
@@ -607,7 +699,10 @@
             const ext = mimeType === 'video/mp4' ? 'mp4' : 'webm';
             const blob = new Blob(chunks, { type: mimeType });
             const file = new File([blob], `video_${Date.now()}.${ext}`, { type: mimeType });
-            try { this.statusMsg.textContent = 'Uploading video to IPFS...'; resolve(await this.uploadFileToIPFS(file)); } catch (error) { reject(error); }
+            try { 
+              this.showToast('Uploading video to IPFS...', 'info'); 
+              resolve(await this.uploadFileToIPFS(file)); 
+            } catch (error) { reject(error); }
           };
           recorder.onerror = (err) => reject(err);
           recorder.start();
@@ -615,46 +710,30 @@
         });
       },
       
-      async uploadMetadataToIPFS(metadata) {
-        this.statusMsg.textContent = 'Uploading metadata to IPFS...';
-        const response = await fetch('/api/uploadMetadataToIPFS', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metadata })
-        });
-        if (!response.ok) throw new Error(`Metadata upload failed: ${response.status}`);
-        return await response.json();
-      },
-      
       // ============================================ //
-      // NFT GENERATE - SAGATAVOTS SAVAM KONTRAKTAM
+      // NFT GENERATE - IZMANTO SDK_SETTINGS
       // ============================================ //
       async generateNFT() {
         if (!this.account || !this.provider || !this.signer) { 
-          this.statusMsg.textContent = 'Connect wallet first'; 
           this.showToast('Connect wallet first', 'warning');
           return; 
         }
         
-        const userConfirmed = confirm(`Create NFT from your visualization?\n\nImage and video will be uploaded to IPFS.\n\nMinting will be added later with your own contract.\n\nDo you want to continue?`);
-        if (!userConfirmed) { this.statusMsg.textContent = 'Cancelled'; return; }
+        const userConfirmed = confirm(`Create NFT from your visualization?\n\nImage and video will be uploaded to IPFS.\n\nFee: ${SDK_SETTINGS.mintFee} ETH + gas\n\nDo you want to continue?`);
+        if (!userConfirmed) { this.showToast('Cancelled', 'info'); return; }
 
-        this.setButtonLoading(this.generateNFTBtn, true);
+        this.setButtonLoading(UI.generateNFTBtn, true);
         this.showProgress();
         this.setProgress(10);
         
         try {
-          // 1. Augšupielādē attēlu uz IPFS
           const imageResult = await this.uploadImageToIPFS();
-          this.statusMsg.textContent = 'Image uploaded to IPFS';
           this.lastImageURL = imageResult;
           this.setProgress(30);
           
-          // 2. Augšupielādē video uz IPFS
           let videoResult = null;
           try { 
             videoResult = await this.uploadVideoToIPFS(5000); 
-            this.statusMsg.textContent = 'Video uploaded to IPFS'; 
             this.lastVideoURL = videoResult; 
             this.setProgress(50);
           } catch (error) { 
@@ -662,7 +741,6 @@
             this.showToast('Video upload failed, continuing without video', 'warning');
           }
           
-          // 3. Ģenerē metadatus
           const metadata = {
             name: "Wallet Visualization NFT",
             description: `Generated from wallet ${this.account.substring(0, 10)}... on ${new Date().toISOString()}`,
@@ -678,32 +756,30 @@
           if (videoResult) metadata.animation_url = videoResult.ipfs;
           this.setProgress(70);
           
-          // 4. Augšupielādē metadatus uz IPFS
           const metadataResult = await this.uploadMetadataToIPFS(metadata);
-          this.statusMsg.textContent = 'Metadata uploaded to IPFS';
           this.lastMetadataURL = metadataResult;
           this.setProgress(85);
           
-          // 5. Parāda preview
           this.showIPFSPreview(imageResult, videoResult, metadataResult);
           this.setProgress(100);
           
-          // 6. Pagaidām tikai paziņojums - vēlāk šeit būs mint ar tavu kontraktu
-          this.statusMsg.textContent = 'Ready to mint! Connect your smart contract here.';
-          this.showToast('✅ Image, video and metadata uploaded to IPFS! Ready for minting.', 'success');
-          alert(`✅ Files uploaded to IPFS!\n\nImage: ${imageResult.http}\nVideo: ${videoResult ? videoResult.http : 'N/A'}\nMetadata: ${metadataResult.http}\n\nMinting will be added later with your own contract.`);
+          // Šeit būs mint ar kontraktu (sagatavots)
+          this.showToast('✅ Files uploaded to IPFS! Ready for minting.', 'success');
+          alert(`✅ Files uploaded to IPFS!\n\nImage: ${imageResult.http}\nVideo: ${videoResult ? videoResult.http : 'N/A'}\nMetadata: ${metadataResult.http}\n\nMint fee: ${SDK_SETTINGS.mintFee} ETH`);
           
         } catch (error) {
           console.error(error);
-          this.statusMsg.textContent = `Error: ${error.message.substring(0, 100)}`;
           this.showToast(`Error: ${error.message.substring(0, 100)}`, 'error');
           alert(`NFT preparation failed: ${error.message}`);
         } finally { 
-          this.setButtonLoading(this.generateNFTBtn, false); 
+          this.setButtonLoading(UI.generateNFTBtn, false); 
           this.hideProgress(); 
         }
       },
       
+      // ============================================ //
+      // VIZUALIZĀCIJA
+      // ============================================ //
       async initParticlesOnce() {
         this.initialParticles = [];
         const particleCount = Math.min(150, 50 + (this.tokens.length || 0) * 15);
@@ -727,11 +803,12 @@
       drawFrame(frame, showTokensFrame) {
         this.frameCount = frame;
         const addon = this.ADDON_STYLES[this.currentAddonStyle];
-        const { width: W, height: H } = this.canvas;
+        const { width: W, height: H } = UI.canvas;
+        const ctx = UI.canvas.getContext('2d');
         
-        this.ctx.clearRect(0, 0, W, H);
-        this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(0, 0, W, H);
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, W, H);
         
         const cx0 = W / 2, cy0 = H / 2;
 
@@ -753,16 +830,16 @@
             if (dist < 120) {
               const avgBalance = (Math.min(p1.token.balance, 20) + Math.min(p2.token.balance, 20)) / 40;
               let alpha = 0.2 + 0.4 * avgBalance * (1 - dist / 200);
-              this.ctx.lineWidth = 1.5 + 2 * avgBalance;
+              ctx.lineWidth = 1.5 + 2 * avgBalance;
               const txFactor = Math.log(this.txCount + 1) / 10;
               let hue = (p1.hue + p2.hue) / 2 + frame * 0.4 * txFactor;
               let sat = 100, light = 70;
               const modified = addon.connectionColorModifier(hue, sat, light, alpha);
-              this.ctx.strokeStyle = `hsla(${modified.hue}, ${modified.sat}%, ${modified.light}%, ${modified.alpha})`;
-              this.ctx.beginPath();
-              this.ctx.moveTo(x1, y1);
-              this.ctx.lineTo(x2, y2);
-              this.ctx.stroke();
+              ctx.strokeStyle = `hsla(${modified.hue}, ${modified.sat}%, ${modified.light}%, ${modified.alpha})`;
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(x2, y2);
+              ctx.stroke();
             }
           }
         }
@@ -772,28 +849,28 @@
           const cx = cx0 + Math.cos(p.angle) * p.radius;
           const cy = cy0 + Math.sin(p.angle) * p.radius;
           const modified = addon.particleColorModifier(p.hue, 100, 70, idx, p.balanceFactor);
-          const gradient = this.ctx.createRadialGradient(cx, cy, 0, cx, cy, p.r * 2.5);
+          const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, p.r * 2.5);
           gradient.addColorStop(0, `hsla(${modified.hue}, ${modified.sat}%, ${modified.light + 10}%, 1)`);
           gradient.addColorStop(0.5, `hsla(${modified.hue}, ${modified.sat}%, ${modified.light}%, 0.9)`);
           gradient.addColorStop(1, `hsla(${modified.hue + 20}, ${modified.sat}%, ${modified.light - 20}%, 0.5)`);
-          this.ctx.fillStyle = gradient;
-          this.ctx.beginPath();
-          this.ctx.arc(cx, cy, p.r, 0, Math.PI * 2);
-          this.ctx.fill();
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(cx, cy, p.r, 0, Math.PI * 2);
+          ctx.fill();
         });
 
-        addon.drawExtraEffects(this.ctx, W, H, frame, this.particles, cx0, cy0);
+        addon.drawExtraEffects(ctx, W, H, frame, this.particles, cx0, cy0);
 
         if (showTokensFrame && this.showInfo) {
-          this.ctx.fillStyle = '#0ff';
-          this.ctx.font = '22px Inter';
-          this.ctx.fillText(`SepoliaETH: ${this.ethBalance.toFixed(4)}`, 10, 80);
-          this.ctx.font = '16px Inter';
-          this.ctx.fillStyle = addon.color;
-          this.ctx.fillText(`${addon.displayName} ACTIVE`, 10, 115);
-          this.ctx.font = '12px Inter';
-          this.ctx.fillStyle = '#888';
-          this.ctx.fillText(addon.indicatorText.split(' - ')[1] || '', 10, 140);
+          ctx.fillStyle = '#0ff';
+          ctx.font = '22px Inter';
+          ctx.fillText(`ETH: ${this.ethBalance.toFixed(4)}`, 10, 80);
+          ctx.font = '16px Inter';
+          ctx.fillStyle = addon.color;
+          ctx.fillText(`${addon.displayName} ACTIVE`, 10, 115);
+          ctx.font = '12px Inter';
+          ctx.fillStyle = '#888';
+          ctx.fillText(addon.indicatorText.split(' - ')[1] || '', 10, 140);
         }
       },
       
@@ -802,14 +879,14 @@
       
       async renderSnapshot() {
         if (!this.account) await this.connectWallet();
-        if (!this.provider || !this.account) { this.statusMsg.textContent = 'Wallet not connected'; return; }
+        if (!this.provider || !this.account) { this.showToast('Wallet not connected', 'warning'); return; }
 
-        this.setButtonLoading(this.renderBtn, true);
+        this.setButtonLoading(UI.renderBtn, true);
         this.stopAnimation();
         this.cleanup();
         this.showProgress();
-        this.progressBar.style.transform = 'scaleX(0)';
-        this.statusMsg.textContent = '';
+        UI.progressBar.style.transform = 'scaleX(0)';
+        this.showToast('Loading wallet data...', 'info');
 
         const steps = [
           { name: 'ETH balance', func: async () => { this.ethBalance = Number(ethers.formatEther(await this.provider.getBalance(this.account))) || 0; }},
@@ -826,31 +903,29 @@
           if (!running) return;
           const targetProgress = currentStep / totalSteps;
           visualProgress += (targetProgress - visualProgress) * 0.05;
-          this.progressBar.style.transform = `scaleX(${visualProgress})`;
+          UI.progressBar.style.transform = `scaleX(${visualProgress})`;
           requestAnimationFrame(animateProgress);
         };
         requestAnimationFrame(animateProgress);
 
         try {
           for (const step of steps) {
-            this.statusMsg.textContent = step.name + '...';
+            this.showToast(step.name + '...', 'info');
             await step.func();
             currentStep++;
           }
-          if (this.showInfo) { this.tokenListContainer.style.display = 'block'; this.updateTokenListUI(); }
+          if (this.showInfo) { UI.tokenListContainer.style.display = 'block'; this.updateTokenListUI(); }
           running = false;
-          this.progressBar.style.transform = 'scaleX(1)';
-          this.statusMsg.textContent = `Ready - ${this.tokens.length} assets found`;
+          UI.progressBar.style.transform = 'scaleX(1)';
+          this.showToast(`Ready - ${this.tokens.length} assets found`, 'success');
           this.hideProgress();
           this.animate();
-          this.showToast(`Loaded ${this.tokens.length} assets`, 'success');
         } catch (e) {
           running = false;
           this.hideProgress();
           console.error(e);
-          this.statusMsg.textContent = 'Render failed';
           this.showToast('Render failed: ' + e.message, 'error');
-        } finally { this.setButtonLoading(this.renderBtn, false); }
+        } finally { this.setButtonLoading(UI.renderBtn, false); }
       },
       
       pickSupportedMimeType() {
@@ -866,21 +941,21 @@
         
         this.showWarning('⚠️ Please do not close this tab while recording video! ⚠️', true);
         
-        this.setButtonLoading(this.recordBtn, true);
+        this.setButtonLoading(UI.recordBtn, true);
         this.showInfo = false;
-        this.tokenListContainer.style.display = 'block';
+        UI.tokenListContainer.style.display = 'block';
         this.stopAnimation();
         this.particles = this.cloneParticles();
         this.drawFrame(0, true);
-        this.statusMsg.textContent = 'Preparing...';
-        this.renderBtn.disabled = true;
-        this.connectBtn.disabled = true;
-        this.generateNFTBtn.disabled = true;
+        this.showToast('Preparing...', 'info');
+        UI.renderBtn.disabled = true;
+        UI.connectBtn.disabled = true;
+        UI.generateNFTBtn.disabled = true;
         this.showProgress();
         if (!this.animRequest) this.animate();
 
         let stream;
-        try { stream = this.canvas.captureStream(30); } catch (err) { this.statusMsg.textContent = 'Not supported'; this.cleanupRecording(previousShowInfo); return; }
+        try { stream = UI.canvas.captureStream(30); } catch (err) { this.showToast('Not supported', 'error'); this.cleanupRecording(previousShowInfo); return; }
 
         const mime = this.pickSupportedMimeType();
         let recorder;
@@ -888,17 +963,17 @@
 
         const chunks = [];
         recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-        recorder.onerror = (ev) => { console.error(ev); this.statusMsg.textContent = 'Error'; };
-        recorder.onstart = () => { this.statusMsg.textContent = 'Recording...'; };
+        recorder.onerror = (ev) => { console.error(ev); this.showToast('Error', 'error'); };
+        recorder.onstart = () => { this.showToast('Recording...', 'info'); };
         recorder.start();
 
         const startTime = performance.now(), duration = 20000;
         const updateProgress = (timestamp) => {
           const elapsed = timestamp - startTime;
           const progress = Math.min(elapsed / duration, 1);
-          this.progressBar.style.transform = `scaleX(${progress})`;
+          UI.progressBar.style.transform = `scaleX(${progress})`;
           const seconds = Math.floor(elapsed / 1000);
-          this.recordTimer.textContent = `Recording: ${seconds} / 20 s`;
+          UI.recordTimer.textContent = `Recording: ${seconds} / 20 s`;
           if (elapsed < duration) requestAnimationFrame(updateProgress);
           else try { recorder.stop(); } catch (e) {}
         };
@@ -916,61 +991,41 @@
           a.click();
           setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
           this.showInfo = previousShowInfo;
-          this.tokenListContainer.style.display = this.showInfo ? 'block' : 'none';
+          UI.tokenListContainer.style.display = this.showInfo ? 'block' : 'none';
           this.updateTokenListUI();
-          this.statusMsg.textContent = 'Recording finished';
-          this.recordTimer.textContent = 'Recording: 0 / 20 s';
+          this.showToast('Recording finished', 'success');
+          UI.recordTimer.textContent = 'Recording: 0 / 20 s';
           this.hideProgress();
-          this.setButtonLoading(this.recordBtn, false);
-          this.renderBtn.disabled = false;
-          this.connectBtn.disabled = false;
-          this.generateNFTBtn.disabled = false;
+          this.setButtonLoading(UI.recordBtn, false);
+          UI.renderBtn.disabled = false;
+          UI.connectBtn.disabled = false;
+          UI.generateNFTBtn.disabled = false;
           this.isRecording = false;
           this.showWarning('', false);
-          this.showToast('Video recorded successfully!', 'success');
         };
       },
       
       cleanupRecording(previousShowInfo) {
         this.showInfo = previousShowInfo;
-        this.tokenListContainer.style.display = this.showInfo ? 'block' : 'none';
+        UI.tokenListContainer.style.display = this.showInfo ? 'block' : 'none';
         this.updateTokenListUI();
-        this.setButtonLoading(this.recordBtn, false);
-        this.renderBtn.disabled = false;
-        this.connectBtn.disabled = false;
-        this.generateNFTBtn.disabled = false;
+        this.setButtonLoading(UI.recordBtn, false);
+        UI.renderBtn.disabled = false;
+        UI.connectBtn.disabled = false;
+        UI.generateNFTBtn.disabled = false;
         this.hideProgress();
-        this.recordTimer.textContent = 'Recording: 0 / 20 s';
+        UI.recordTimer.textContent = 'Recording: 0 / 20 s';
         this.isRecording = false;
         this.showWarning('', false);
       },
       
       init() {
-        this.canvas = document.getElementById('snapshotCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.connectBtn = document.getElementById('connectBtn');
-        this.renderBtn = document.getElementById('renderBtn');
-        this.recordBtn = document.getElementById('recordBtn');
-        this.generateNFTBtn = document.getElementById('generateNFTBtn');
-        this.accountDisplay = document.getElementById('accountDisplay');
-        this.recordTimer = document.getElementById('recordTimer');
-        this.statusMsg = document.getElementById('statusMsg');
-        this.progressBarContainer = document.getElementById('progressBarContainer');
-        this.progressBar = document.getElementById('progressBar');
-        this.tokenListContainer = document.getElementById('tokenListContainer');
-        this.tokenListContent = document.getElementById('tokenListContent');
-        this.ipfsPreview = document.getElementById('ipfsPreview');
-        this.previewImage = document.getElementById('previewImage');
-        this.previewVideo = document.getElementById('previewVideo');
-        this.previewMetadata = document.getElementById('previewMetadata');
-        this.styleIndicator = document.getElementById('styleIndicator');
-        this.indicatorText = document.getElementById('indicatorText');
-        this.warningBanner = document.getElementById('warningBanner');
+        this.resizeCanvas();
         
-        this.connectBtn.addEventListener('click', () => this.connectWallet());
-        this.renderBtn.addEventListener('click', () => this.renderSnapshot());
-        this.generateNFTBtn.addEventListener('click', () => this.generateNFT());
-        this.recordBtn.addEventListener('click', () => this.startRecording());
+        UI.connectBtn.addEventListener('click', () => this.connectWallet());
+        UI.renderBtn.addEventListener('click', () => this.renderSnapshot());
+        UI.generateNFTBtn.addEventListener('click', () => this.generateNFT());
+        UI.recordBtn.addEventListener('click', () => this.startRecording());
         
         document.querySelectorAll('.theme-btn').forEach(btn => {
           btn.addEventListener('click', () => {
@@ -980,22 +1035,18 @@
           });
         });
         
-        const fullscreenIcon = document.getElementById('fullscreenIcon');
-        const toggleInfoIcon = document.getElementById('toggleInfoIcon');
-        
-        fullscreenIcon.addEventListener('click', () => { 
-          if (!document.fullscreenElement) this.canvas.requestFullscreen().catch(() => {}); 
+        UI.fullscreenIcon.addEventListener('click', () => { 
+          if (!document.fullscreenElement) UI.canvas.requestFullscreen().catch(() => {}); 
           else document.exitFullscreen().catch(() => {}); 
         });
         
-        toggleInfoIcon.addEventListener('click', () => { 
+        UI.toggleInfoIcon.addEventListener('click', () => { 
           this.showInfo = !this.showInfo; 
-          this.tokenListContainer.style.display = this.showInfo ? 'block' : 'none'; 
+          UI.tokenListContainer.style.display = this.showInfo ? 'block' : 'none'; 
           if (this.showInfo) this.updateTokenListUI(); 
         });
         
         window.addEventListener('resize', () => this.resizeCanvas());
-        this.resizeCanvas();
       }
     };
     
