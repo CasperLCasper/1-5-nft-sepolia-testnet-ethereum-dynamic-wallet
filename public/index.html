@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Dynamic Wallet Visualizer — Manifold NFT Generator</title>
+  <title>Dynamic Wallet Visualizer</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 
@@ -96,7 +96,6 @@
     #toggleInfoIcon:hover { background:rgba(0,255,255,0.2); transform: scale(1.05); }
     #accountDisplay { width:100%; word-break:break-word; margin-top:8px; font-size:16px; text-align:center; }
 
-    /* Warning banner for recording */
     .warning-banner {
       position: fixed;
       top: 0;
@@ -179,7 +178,7 @@
       </svg>
       <div class="header-text">
         <h1>Dynamic Wallet Visualizer</h1>
-        <p class="subtitle">Watch your Ethereum assets come alive — Create NFT on Manifold</p>
+        <p class="subtitle">Watch your Ethereum assets come alive</p>
       </div>
     </header>
 
@@ -235,7 +234,7 @@
 
   <script>
     // ============================================ //
-    // APP OBJECT - Iekapsulēšana (FIX #1)
+    // APP OBJECT - Iekapsulēšana
     // ============================================ //
     const App = {
       // State
@@ -249,12 +248,15 @@
       particles: [],
       initialParticles: [],
       animRequest: null,
-      lastImageURL: null,
-      lastVideoURL: null,
-      lastMetadataURL: null,
       currentAddonStyle: 'classic',
       frameCount: 0,
       isRecording: false,
+      
+      // NFT dati (saglabāti, bet vēlāk izmantos)
+      lastImageURL: null,
+      lastVideoURL: null,
+      lastMetadataURL: null,
+      recordedVideoBlob: null,
       
       // DOM elementi
       canvas: null,
@@ -278,23 +280,14 @@
       indicatorText: null,
       warningBanner: null,
       
-      // Konfigurācija
-      MANIFOLD_CONTRACT_ADDRESS: "0x10ADa3814d43803f1B4caC0a445AaF3217de2525",
-      MANIFOLD_ABI: [
-        "function mint(address to, uint256 tokenId, string memory uri) external payable",
-        "function mintWithETH(address to, uint256 tokenId, string memory uri) external payable",
-        "function purchase(uint256 tokenId, string memory uri) external payable"
-      ],
-      
-      // Mobilā optimizācija (FIX #6)
+      // Mobilā optimizācija
       getCanvasDimensions() {
         const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-        const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 3); // Limit DPR on mobile
+        const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 3);
         let width = 1920;
         let height = 1080;
         
         if (isMobile) {
-          // Mobile: max 1080p, bet mazāk intensīvi
           width = Math.min(1080, window.innerWidth * dpr);
           height = Math.min(720, window.innerHeight * dpr);
         }
@@ -315,7 +308,6 @@
         this.ctx.scale(dpr * scale, dpr * scale);
       },
       
-      // Atmiņas tīrīšana pirms jauna render (FIX #3)
       cleanup() {
         if (this.animRequest) {
           cancelAnimationFrame(this.animRequest);
@@ -328,12 +320,6 @@
         }
       },
       
-      // Unikāls tokenId (FIX #2)
-      generateUniqueTokenId() {
-        return parseInt(Date.now().toString().slice(-8) + Math.floor(Math.random() * 10000).toString().padStart(4, '0'));
-      },
-      
-      // Parāda brīdinājumu (FIX #5)
       showWarning(message, show = true) {
         if (this.warningBanner) {
           this.warningBanner.textContent = message;
@@ -345,14 +331,11 @@
         }
       },
       
-      // Toast notifikācija
       showToast(message, type = 'info') {
-        // Vienkāršs toast - var paplašināt
         this.statusMsg.textContent = message;
         console.log(`[${type}] ${message}`);
       },
       
-      // Progress bar
       showProgress() { this.progressBarContainer.style.display = 'block'; this.progressBar.style.transform = 'scaleX(0)'; },
       hideProgress() { 
         this.progressBar.style.transform = 'scaleX(1)'; 
@@ -363,7 +346,6 @@
       },
       setProgress(percent) { this.progressBar.style.transform = `scaleX(${percent / 100})`; },
       
-      // Button loading state
       setButtonLoading(button, isLoading) { 
         if (isLoading) { button.classList.add('loading'); button.disabled = true; } 
         else { button.classList.remove('loading'); button.disabled = false; } 
@@ -493,7 +475,6 @@
         }
       },
       
-      // Utility
       hashStringToInt(str, mod = 1000) { 
         let h = 2166136261 >>> 0; 
         for (let i = 0; i < str.length; i++) {
@@ -507,7 +488,7 @@
       
       updateTokenListUI() {
         if(!this.tokens || this.tokens.length === 0){ 
-          this.tokenListContent.innerHTML = '<tr><td colspan="2" style="color:#777;">No assets</td></tr>'; 
+          this.tokenListContent.innerHTML = '<tr><td colspan="2" style="color:#777;">No assets<\/td><\/tr>'; 
           return; 
         }
         this.tokenListContent.innerHTML = '';
@@ -534,7 +515,6 @@
         setTimeout(() => { this.ipfsPreview.style.display = 'none'; }, 10000);
       },
       
-      // API calls
       async getTokens() {
         if (!this.account) return [];
         this.showProgress();
@@ -646,41 +626,31 @@
         return await response.json();
       },
       
-      async mintOnManifold(metadataURI) {
-        const tokenId = this.generateUniqueTokenId(); // FIX #2
-        const contract = new ethers.Contract(this.MANIFOLD_CONTRACT_ADDRESS, this.MANIFOLD_ABI, this.signer);
-        try {
-          const tx = await contract.mint(this.account, tokenId, metadataURI, { value: ethers.parseEther("0.01"), gasLimit: 600000 });
-          return await tx.wait();
-        } catch (e) {
-          try {
-            const tx = await contract.mintWithETH(this.account, tokenId, metadataURI, { value: ethers.parseEther("0.01"), gasLimit: 600000 });
-            return await tx.wait();
-          } catch (e2) {
-            try {
-              const tx = await contract.purchase(tokenId, metadataURI, { value: ethers.parseEther("0.01"), gasLimit: 600000 });
-              return await tx.wait();
-            } catch (e3) { throw new Error(`All mint methods failed: ${e3.message}`); }
-          }
-        }
-      },
-      
+      // ============================================ //
+      // NFT GENERATE - SAGATAVOTS SAVAM KONTRAKTAM
+      // ============================================ //
       async generateNFT() {
-        if (!this.account || !this.provider || !this.signer) { this.statusMsg.textContent = 'Connect wallet first'; return; }
-        if (this.MANIFOLD_CONTRACT_ADDRESS === "0x0000000000000000000000000000000000000000") { this.statusMsg.textContent = 'Please configure Manifold contract address first!'; alert('Manifold contract address not configured!'); return; }
+        if (!this.account || !this.provider || !this.signer) { 
+          this.statusMsg.textContent = 'Connect wallet first'; 
+          this.showToast('Connect wallet first', 'warning');
+          return; 
+        }
         
-        const userConfirmed = confirm(`Create NFT on Manifold from your visualization?\n\nFee: 0.01 ETH + gas\n\nDo you want to continue?`);
+        const userConfirmed = confirm(`Create NFT from your visualization?\n\nImage and video will be uploaded to IPFS.\n\nMinting will be added later with your own contract.\n\nDo you want to continue?`);
         if (!userConfirmed) { this.statusMsg.textContent = 'Cancelled'; return; }
 
         this.setButtonLoading(this.generateNFTBtn, true);
         this.showProgress();
         this.setProgress(10);
+        
         try {
+          // 1. Augšupielādē attēlu uz IPFS
           const imageResult = await this.uploadImageToIPFS();
           this.statusMsg.textContent = 'Image uploaded to IPFS';
           this.lastImageURL = imageResult;
           this.setProgress(30);
           
+          // 2. Augšupielādē video uz IPFS
           let videoResult = null;
           try { 
             videoResult = await this.uploadVideoToIPFS(5000); 
@@ -692,6 +662,7 @@
             this.showToast('Video upload failed, continuing without video', 'warning');
           }
           
+          // 3. Ģenerē metadatus
           const metadata = {
             name: "Wallet Visualization NFT",
             description: `Generated from wallet ${this.account.substring(0, 10)}... on ${new Date().toISOString()}`,
@@ -700,7 +671,6 @@
               { trait_type: "ETH Balance", value: this.ethBalance.toString() },
               { trait_type: "Token Count", value: this.tokens.length.toString() },
               { trait_type: "Transaction Count", value: this.txCount.toString() },
-              { trait_type: "Platform", value: "Manifold" },
               { trait_type: "Visual Style", value: this.ADDON_STYLES[this.currentAddonStyle].name },
               { trait_type: "Generated At", value: new Date().toISOString() }
             ]
@@ -708,27 +678,30 @@
           if (videoResult) metadata.animation_url = videoResult.ipfs;
           this.setProgress(70);
           
+          // 4. Augšupielādē metadatus uz IPFS
           const metadataResult = await this.uploadMetadataToIPFS(metadata);
           this.statusMsg.textContent = 'Metadata uploaded to IPFS';
           this.lastMetadataURL = metadataResult;
-          this.showIPFSPreview(imageResult, videoResult, metadataResult);
           this.setProgress(85);
           
-          this.statusMsg.textContent = 'Minting on Manifold...';
-          const receipt = await this.mintOnManifold(metadataResult.ipfs);
+          // 5. Parāda preview
+          this.showIPFSPreview(imageResult, videoResult, metadataResult);
           this.setProgress(100);
           
-          if (receipt.status === 1) {
-            this.statusMsg.textContent = 'NFT minted successfully on Manifold!';
-            this.showToast('✅ NFT minted successfully!', 'success');
-            alert(`✅ NFT Created on Manifold!\n\nMetadata: ${metadataResult.ipfs}\nView: ${metadataResult.http}\nImage: ${imageResult.http}\nVideo: ${videoResult ? videoResult.http : 'N/A'}\nTransaction: ${receipt.hash}`);
-          } else { throw new Error('Transaction failed'); }
+          // 6. Pagaidām tikai paziņojums - vēlāk šeit būs mint ar tavu kontraktu
+          this.statusMsg.textContent = 'Ready to mint! Connect your smart contract here.';
+          this.showToast('✅ Image, video and metadata uploaded to IPFS! Ready for minting.', 'success');
+          alert(`✅ Files uploaded to IPFS!\n\nImage: ${imageResult.http}\nVideo: ${videoResult ? videoResult.http : 'N/A'}\nMetadata: ${metadataResult.http}\n\nMinting will be added later with your own contract.`);
+          
         } catch (error) {
           console.error(error);
-          if (error.code === 'ACTION_REJECTED') { this.statusMsg.textContent = 'Transaction rejected'; alert('You rejected the transaction'); }
-          else if (error.message.includes('insufficient funds')) { this.statusMsg.textContent = 'Insufficient ETH balance'; alert(`Insufficient funds!\nYou need at least 0.01 ETH + gas fees.`); }
-          else { this.statusMsg.textContent = `Error: ${error.message.substring(0, 100)}`; alert(`NFT generation failed: ${error.message}`); }
-        } finally { this.setButtonLoading(this.generateNFTBtn, false); this.hideProgress(); }
+          this.statusMsg.textContent = `Error: ${error.message.substring(0, 100)}`;
+          this.showToast(`Error: ${error.message.substring(0, 100)}`, 'error');
+          alert(`NFT preparation failed: ${error.message}`);
+        } finally { 
+          this.setButtonLoading(this.generateNFTBtn, false); 
+          this.hideProgress(); 
+        }
       },
       
       async initParticlesOnce() {
@@ -762,7 +735,6 @@
         
         const cx0 = W / 2, cy0 = H / 2;
 
-        // Optimizēta zīmēšana ar distance pruning
         for (let i = 0; i < this.particles.length; i++) {
           const p1 = this.particles[i];
           const x1 = cx0 + Math.cos(p1.angle) * p1.radius;
@@ -834,7 +806,7 @@
 
         this.setButtonLoading(this.renderBtn, true);
         this.stopAnimation();
-        this.cleanup(); // FIX #3 - iznīcina vecos objektus
+        this.cleanup();
         this.showProgress();
         this.progressBar.style.transform = 'scaleX(0)';
         this.statusMsg.textContent = '';
@@ -892,7 +864,6 @@
         this.isRecording = true;
         const previousShowInfo = this.showInfo;
         
-        // FIX #5 - parāda brīdinājumu
         this.showWarning('⚠️ Please do not close this tab while recording video! ⚠️', true);
         
         this.setButtonLoading(this.recordBtn, true);
@@ -955,7 +926,7 @@
           this.connectBtn.disabled = false;
           this.generateNFTBtn.disabled = false;
           this.isRecording = false;
-          this.showWarning('', false); // FIX #5 - paslēpj brīdinājumu
+          this.showWarning('', false);
           this.showToast('Video recorded successfully!', 'success');
         };
       },
@@ -975,7 +946,6 @@
       },
       
       init() {
-        // DOM elementi
         this.canvas = document.getElementById('snapshotCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.connectBtn = document.getElementById('connectBtn');
@@ -997,7 +967,6 @@
         this.indicatorText = document.getElementById('indicatorText');
         this.warningBanner = document.getElementById('warningBanner');
         
-        // Event listeners
         this.connectBtn.addEventListener('click', () => this.connectWallet());
         this.renderBtn.addEventListener('click', () => this.renderSnapshot());
         this.generateNFTBtn.addEventListener('click', () => this.generateNFT());
@@ -1030,7 +999,6 @@
       }
     };
     
-    // Start the app
     App.init();
   </script>
 </body>
