@@ -13,26 +13,27 @@
     h1 { font-size:24px; margin:0; line-height:1; background:linear-gradient(90deg,#ffffff,#aaaaaa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-align:center; }
     .subtitle { margin-top:4px; color:#9fb0c3; font-size:18px; text-align:center; }
     
-    .controls { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:10px 0; }
-    button { padding:12px 20px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(90deg,#4a90e2,#9013fe); color:#fff; font-weight:700; font-size:16px; box-shadow:0 6px 18px rgba(0,0,0,0.45); transition: transform 0.2s, box-shadow 0.2s; }
-    button:disabled { background:#444; cursor:not-allowed; opacity:0.5; }
-    button:hover:not(:disabled) { transform:translateY(-4px) scale(1.03); box-shadow:0 8px 22px rgba(0,0,0,0.65); }
-    
-    .admin-panel { background: rgba(0,255,255,0.1); border: 1px solid #0ff; border-radius: 16px; padding: 20px; margin: 20px 0; width: 100%; max-width: 600px; }
-    .admin-panel h3 { color: #0ff; margin-top: 0; }
-    .admin-panel input, .admin-panel select { padding: 10px; border-radius: 8px; border: 1px solid #333; background: #111; color: #fff; margin: 5px; }
-    .admin-panel button { background: linear-gradient(90deg,#0ff,#0a0); padding: 8px 16px; font-size: 14px; }
-    .admin-panel .field-group { margin: 15px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-    
-    .snapshot-container { width:100%; background:#000; border-radius:14px; padding:18px; box-shadow:0 12px 40px rgba(0,0,0,0.6); position:relative; }
-    #snapshotCanvas { width:100%; border-radius:10px; border:1px solid rgba(255,255,255,0.03); display:block; margin-bottom:12px; background: #000; }
-    
-    #accountDisplay { width:100%; word-break:break-word; margin-top:8px; font-size:16px; text-align:center; }
-    .status { font-weight:600; font-size:16px; color:#fff; text-align:center; margin:10px 0; }
-    
-    .theme-selector { display: flex; gap: 12px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
-    .theme-btn { padding: 8px 16px; border-radius: 20px; border: 2px solid; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease; background: rgba(0,0,0,0.6); }
-    .theme-btn.active { background: rgba(255,255,255,0.2); box-shadow: 0 0 15px currentColor; }
+    .theme-selector {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin: 10px 0;
+      flex-wrap: wrap;
+    }
+    .theme-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 2px solid;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+    }
+    .theme-btn:hover { transform: translateY(-2px) scale(1.05); }
+    .theme-btn.active { background: rgba(255,255,255,0.2); box-shadow: 0 0 15px currentColor; transform: scale(1.02); }
+    .theme-btn.active::before { content: '✓ '; font-weight: bold; }
     .theme-classic { border-color: #0ff; color: #0ff; }
     .theme-forest { border-color: #0f0; color: #0f0; }
     .theme-ocean { border-color: #00f; color: #00f; }
@@ -41,10 +42,151 @@
     .theme-rainbow { border-color: #ff00ff; color: #ff00ff; }
     .theme-fire { border-color: #ff4400; color: #ff4400; }
     
-    .warning-banner { position: fixed; top: 0; left: 0; right: 0; background: #f59e0b; color: #000; text-align: center; padding: 8px; font-size: 12px; font-weight: 600; z-index: 200; transform: translateY(-100%); transition: transform 0.3s ease; }
-    .warning-banner.show { transform: translateY(0); }
+    .active-style-indicator {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(10px);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 100;
+      border-left: 4px solid;
+      pointer-events: none;
+      font-family: monospace;
+    }
     
-    .logo { text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: bold; letter-spacing: 4px; }
+    .controls { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+    button { padding:12px 20px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(90deg,#4a90e2,#9013fe); color:#fff; font-weight:700; font-size:16px; box-shadow:0 6px 18px rgba(0,0,0,0.45); transition: transform 0.2s, box-shadow 0.2s; }
+    button:disabled { background:#444; cursor:not-allowed; opacity:0.5; }
+    button:hover:not(:disabled) { transform:translateY(-4px) scale(1.03); box-shadow:0 8px 22px rgba(0,0,0,0.65); }
+    
+    button.loading { opacity: 0.7; cursor: wait; transform: none !important; }
+    button.loading::after {
+      content: '';
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-left: 10px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .generate-nft-btn { background: linear-gradient(135deg, #ffffff, #e8f4f0); color: #000; }
+    .generate-nft-btn:hover:not(:disabled) { background: linear-gradient(135deg, #d4fcec, #b8f5e0); color: #000; box-shadow: 0 8px 22px rgba(0,255,204,0.2); }
+    .generate-nft-btn.loading::after { border-top-color: #000; }
+    
+    .admin-panel {
+      background: rgba(0,255,255,0.1);
+      border: 1px solid #0ff;
+      border-radius: 16px;
+      padding: 20px;
+      margin: 20px 0;
+      width: 100%;
+      max-width: 700px;
+      display: none;
+    }
+    .admin-panel h3 { color: #0ff; margin-top: 0; }
+    .admin-panel input, .admin-panel select { 
+      padding: 10px; 
+      border-radius: 8px; 
+      border: 1px solid #333; 
+      background: #111; 
+      color: #fff; 
+      margin: 5px;
+      font-size: 14px;
+    }
+    .admin-panel button { background: linear-gradient(90deg,#0ff,#0a0); padding: 8px 16px; font-size: 14px; margin: 5px; }
+    .admin-panel .field-group { margin: 15px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .admin-panel code { background: #222; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 12px; word-break: break-all; }
+    
+    .snapshot-container { width:100%; background:#000; border-radius:14px; padding:18px; box-shadow:0 12px 40px rgba(0,0,0,0.6); position:relative; }
+    #snapshotCanvas { width:100%; border-radius:10px; border:1px solid rgba(255,255,255,0.03); display:block; margin-bottom:12px; }
+    #recordTimer { margin-top:6px; color:#0ff; font-weight:600; font-size:16px; text-align:center; }
+    #statusContainer { position: relative; width: 100%; height: 40px; margin-top: 8px; }
+    .status { font-weight:600; font-size:16px; color:#fff; line-height:40px; text-align:center; }
+    #progressBarContainer { position: absolute; top: 50%; left: 50%; width: 60%; height: 18px; background: rgba(255,255,255,0.1); border-radius: 6px; transform: translate(-50%, -50%); display: none; overflow: hidden; }
+    #progressBar { height: 100%; width: 100%; background: linear-gradient(90deg,#0ff,#4a90e2); border-radius: 6px; transform: scaleX(0); transform-origin: left center; transition: transform 0.4s ease; }
+    #fullscreenIcon { position:absolute; top:10px; right:10px; display:flex; align-items:center; cursor:pointer; color:#0ff; background:rgba(0,0,0,0.3); border-radius:6px; padding:6px 10px; transition: background 0.2s, transform 0.2s; z-index:10; }
+    #fullscreenIcon:hover { background:rgba(0,255,255,0.2); transform: scale(1.05); }
+    #toggleInfoIcon { position:absolute; top:10px; left:10px; display:flex; align-items:center; cursor:pointer; color:#0ff; background:rgba(0,0,0,0.3); border-radius:6px; padding:6px 10px; transition: background 0.2s, transform 0.2s; z-index:10; }
+    #toggleInfoIcon:hover { background:rgba(0,255,255,0.2); transform: scale(1.05); }
+    #accountDisplay { width:100%; word-break:break-word; margin-top:8px; font-size:16px; text-align:center; }
+
+    .warning-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #f59e0b;
+      color: #000;
+      text-align: center;
+      padding: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 200;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+    }
+    .warning-banner.show { transform: translateY(0); }
+
+    #tokenListContainer {
+      display:none;
+      position:absolute;
+      top:80px;
+      left:10px;
+      max-height:150px;
+      width:90%;
+      max-width:576px;
+      background:rgba(0,0,0,0.5);
+      border-radius:9px;
+      overflow-y:auto;
+      padding:10px;
+      font-size:14px;
+      z-index:15;
+    }
+    #tokenListContainer table { width:100%; border-collapse:collapse; }
+    #tokenListContainer th, #tokenListContainer td { padding:6px 8px; text-align:left; font-size:13px; }
+    #tokenListContainer th { color:#0ff; font-weight:600; }
+    #tokenListContainer tr:nth-child(even) td { background:rgba(255,255,255,0.05); }
+    #tokenListContainer tr:nth-child(odd) td { background:rgba(255,255,255,0.02); }
+    #tokenListContainer::-webkit-scrollbar { width:6px; }
+    #tokenListContainer::-webkit-scrollbar-thumb { background:#0ff; border-radius:3px; }
+
+    .site-header { position: relative; width: 100%; min-height: 80px; }
+    .logo { position: absolute; top: 0px; left: 10px; width: 280px; height: auto; }
+    .header-text { text-align: center; padding-top: 5px; }
+    
+    @media (max-width: 768px) {
+      .logo { position: static; display: block; margin: 0 auto 20px auto; width: 140px; }
+      .header-text { padding-top: 0; }
+      .site-header { min-height: auto; }
+    }
+    
+    .ipfs-preview {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.8);
+      border: 1px solid #0ff;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 11px;
+      max-width: 300px;
+      z-index: 100;
+      display: none;
+    }
+    .ipfs-preview a { color: #0ff; word-break: break-all; }
+    
+    .mint-btn { background: linear-gradient(135deg,#ffd700,#ff8c00); color: #000; }
+    .mint-btn:hover:not(:disabled) { background: linear-gradient(135deg,#ffed4a,#ffaa33); }
   </style>
 </head>
 
@@ -54,72 +196,18 @@
   </div>
 
   <div class="container">
-    <div class="logo">🎨 VIRSBURTS NFT</div>
-    <h1>Dynamic Wallet Visualizer</h1>
-    <p class="subtitle">Watch your Ethereum assets come alive</p>
-
-    <div class="controls">
-      <button id="connectBtn">🔌 Connect Wallet</button>
-      <button id="renderBtn" disabled>🎨 Render Snapshot</button>
-      <button id="recordBtn" disabled>🎬 Record 20s Video</button>
-    </div>
-
-    <div id="accountDisplay">Connected account: —</div>
-    <div id="statusMsg" class="status"></div>
-
-    <!-- ADMIN PANELIS - redzams TIKAI līguma īpašniekam -->
-    <div id="adminPanel" class="admin-panel" style="display: none;">
-      <h3>⚙️ ADMIN PANEL (Only you see this)</h3>
-      
-      <div class="field-group">
-        <label>📛 Collection Name:</label>
-        <input type="text" id="collectionName" placeholder="My NFT Collection" />
-        <button id="saveNameBtn">💾 Save</button>
+    <header class="site-header">
+      <svg xmlns="http://www.w3.org/2000/svg" width="160" height="40" viewBox="0 0 158.74999 37.041668" class="logo">
+        <text xml:space="preserve" style="font-style:normal;font-weight:normal;font-size:14.1111px;line-height:1.25;font-family:sans-serif;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.264583;" x="8.8499603" y="31.493832">
+          <tspan x="8.8499603" y="31.493832" style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.1111px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono';stroke-width:0.264583;fill:#ffffff;">V I R S B U R T S</tspan>
+        </text>
+        <rect style="fill:#ffffff;stroke-width:0.264583" width="3.1013243" height="15.020124" x="5.9450045" y="3.8351295" />
+      </svg>
+      <div class="header-text">
+        <h1>Dynamic Wallet Visualizer</h1>
+        <p class="subtitle">Watch your Ethereum assets come alive</p>
       </div>
-      
-      <div class="field-group">
-        <label>💰 Mint Price (ETH):</label>
-        <select id="mintPrice">
-          <option value="0.005">0.005 ETH</option>
-          <option value="0.01" selected>0.01 ETH</option>
-          <option value="0.02">0.02 ETH</option>
-          <option value="0.05">0.05 ETH</option>
-          <option value="0.1">0.1 ETH</option>
-        </select>
-        <button id="savePriceBtn">💾 Save</button>
-      </div>
-      
-      <div class="field-group">
-        <label>🖼️ Base URI (metadata):</label>
-        <input type="text" id="baseURI" placeholder="https://ipfs.io/ipfs/.../" style="width: 300px;" />
-        <button id="saveURIBtn">💾 Save</button>
-      </div>
-      
-      <div class="field-group">
-        <label>📊 Your Collection Address:</label>
-        <code id="collectionAddressDisplay" style="background:#222; padding:8px; border-radius:6px; word-break:break-all;">—</code>
-        <button id="copyAddressBtn">📋 Copy</button>
-      </div>
-      
-      <div class="field-group">
-        <label>💳 Your Wallet (funds go here):</label>
-        <code id="ownerAddressDisplay" style="background:#222; padding:8px; border-radius:6px;">—</code>
-      </div>
-      
-      <hr />
-      <div class="field-group">
-        <button id="createCollectionBtn" style="background: linear-gradient(90deg,#0f0,#0a0);">✨ CREATE MY NFT COLLECTION (ONE TIME)</button>
-      </div>
-      <p style="font-size: 12px; color: #888;">⚠️ This will deploy your own NFT contract. Only do this once!</p>
-    </div>
-
-    <div class="snapshot-container">
-      <canvas id="snapshotCanvas" width="1920" height="1080"></canvas>
-      <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-        <button id="mintBtn" disabled style="background: linear-gradient(135deg,#ffd700,#ff8c00);">💰 MINT NFT</button>
-        <button id="fullscreenBtn">⤢ Fullscreen</button>
-      </div>
-    </div>
+    </header>
 
     <div class="theme-selector">
       <button class="theme-btn theme-classic active" data-theme="classic">⭐ CLASSIC</button>
@@ -130,24 +218,107 @@
       <button class="theme-btn theme-rainbow" data-theme="rainbow">🌈 RAINBOW</button>
       <button class="theme-btn theme-fire" data-theme="fire">🔥 FIRE</button>
     </div>
+
+    <div class="controls">
+      <button id="connectBtn">Connect Wallet</button>
+      <button id="renderBtn" disabled>Render Snapshot</button>
+      <button id="recordBtn" disabled>Record 20s HD Video</button>
+      <button id="generateNFTBtn" class="generate-nft-btn" disabled>Generate NFT</button>
+    </div>
+
+    <div id="accountDisplay">Connected account: —</div>
+    <div id="statusContainer">
+      <div id="statusMsg" class="status"></div>
+      <div id="progressBarContainer"><div id="progressBar"></div></div>
+    </div>
+    <div id="recordTimer">Recording: 0 / 20 s</div>
+
+    <!-- ADMIN PANELIS - redzams TIKAI līguma īpašniekam -->
+    <div id="adminPanel" class="admin-panel">
+      <h3>⚙️ ADMIN PANEL (Only you see this)</h3>
+      
+      <div class="field-group">
+        <label>🚀 CREATE YOUR COLLECTION (ONE TIME):</label>
+        <button id="createCollectionBtn" style="background: linear-gradient(90deg,#0f0,#0a0);">✨ CREATE MY NFT COLLECTION</button>
+      </div>
+      
+      <div class="field-group">
+        <label>📛 Collection Name:</label>
+        <input type="text" id="collectionNameInput" placeholder="My NFT Collection" style="width: 200px;" />
+        <button id="saveNameBtn">💾 Save</button>
+      </div>
+      
+      <div class="field-group">
+        <label>💰 Mint Price (ETH):</label>
+        <select id="mintPriceSelect">
+          <option value="0.005">0.005 ETH</option>
+          <option value="0.01" selected>0.01 ETH</option>
+          <option value="0.02">0.02 ETH</option>
+          <option value="0.05">0.05 ETH</option>
+          <option value="0.1">0.1 ETH</option>
+        </select>
+        <button id="savePriceBtn">💾 Save</button>
+      </div>
+      
+      <div class="field-group">
+        <label>🖼️ Base URI:</label>
+        <input type="text" id="baseURIInput" placeholder="https://ipfs.io/ipfs/.../" style="width: 300px;" />
+        <button id="saveURIBtn">💾 Save</button>
+      </div>
+      
+      <div class="field-group">
+        <label>📊 Your Collection Address:</label>
+        <code id="collectionAddressDisplay">—</code>
+        <button id="copyAddressBtn">📋 Copy</button>
+      </div>
+      
+      <div class="field-group">
+        <label>💳 Your Wallet (funds go here):</label>
+        <code id="ownerAddressDisplay">—</code>
+      </div>
+    </div>
+
+    <div class="snapshot-container">
+      <canvas id="snapshotCanvas" width="1920" height="1080"></canvas>
+      <div id="fullscreenIcon">⤢ <span>Fullscreen</span></div>
+      <div id="toggleInfoIcon">ℹ <span>Info</span></div>
+      <div id="tokenListContainer">
+        <table>
+          <thead><tr><th>Address</th><th>Balance</th> </tr>
+          </thead>
+          <tbody id="tokenListContent"></tbody>
+        </table>
+      </div>
+    </div>
+    
+    <button id="mintBtn" class="mint-btn" style="padding: 15px 40px; font-size: 20px; margin-top: 10px;" disabled>💰 MINT NFT</button>
+  </div>
+
+  <div id="ipfsPreview" class="ipfs-preview" style="display:none;">
+    <strong>IPFS Links:</strong><br>
+    <span id="previewImage"></span><br>
+    <span id="previewVideo"></span><br>
+    <span id="previewMetadata"></span>
+  </div>
+
+  <div id="styleIndicator" class="active-style-indicator" style="border-left-color: #0ff;">
+    <span id="indicatorText">⭐ CLASSIC MODE - Original visualization</span>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.umd.min.js"></script>
 
   <script>
     // ============================================ //
-    // KONFIGURĀCIJA
+    // FACTORY LIGUMA KONFIGURACIJA
     // ============================================ //
     const FACTORY_ADDRESS = "0x5Adf6Ec92A02C18335293C1CAB21C9C725e14787";
     
-    // Factory ABI
     const FACTORY_ABI = [
       "function createCollection(string memory name, string memory symbol, string memory baseURI) external",
       "function getMyCollection() external view returns (address)",
       "function userCollection(address) external view returns (address)"
     ];
     
-    // NFT līguma ABI (pēc izveides)
     const NFT_ABI = [
       "function mint(address to) payable",
       "function mintPrice() view returns (uint256)",
@@ -158,318 +329,948 @@
       "function owner() view returns (address)",
       "function totalSupply() view returns (uint256)"
     ];
-    
+
     // ============================================ //
-    // APP STĀVOKLIS
+    // SDK KONFIGURĀCIJAS BLOKS
     // ============================================ //
-    let provider, signer, userAddress;
-    let factoryContract;
-    let userNFTContract = null;
-    let userNFTAddress = null;
-    let isOwner = false;
-    let currentTheme = 'classic';
-    
-    // DOM elementi
-    const connectBtn = document.getElementById('connectBtn');
-    const renderBtn = document.getElementById('renderBtn');
-    const recordBtn = document.getElementById('recordBtn');
-    const mintBtn = document.getElementById('mintBtn');
-    const adminPanel = document.getElementById('adminPanel');
-    const collectionAddressDisplay = document.getElementById('collectionAddressDisplay');
-    const ownerAddressDisplay = document.getElementById('ownerAddressDisplay');
-    const createCollectionBtn = document.getElementById('createCollectionBtn');
-    const saveNameBtn = document.getElementById('saveNameBtn');
-    const savePriceBtn = document.getElementById('savePriceBtn');
-    const saveURIBtn = document.getElementById('saveURIBtn');
-    const collectionNameInput = document.getElementById('collectionName');
-    const mintPriceSelect = document.getElementById('mintPrice');
-    const baseURIInput = document.getElementById('baseURI');
-    const copyAddressBtn = document.getElementById('copyAddressBtn');
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
-    const canvas = document.getElementById('snapshotCanvas');
-    const statusMsg = document.getElementById('statusMsg');
-    const accountDisplay = document.getElementById('accountDisplay');
-    
+    const SDK_SETTINGS = {
+      alchemyKey: "YOUR_ALCHEMY_API_KEY",
+      alchemyNetwork: "eth-sepolia",
+      manifoldContract: "0x0000000000000000000000000000000000000000",
+      ipfsEndpoint: "/api/uploadToIPFS",
+      ipfsMetadataEndpoint: "/api/uploadMetadataToIPFS",
+      customUploader: null,
+      network: "sepolia",
+      mintFee: "0.01",
+      getTokensEndpoint: "/api/getTokens",
+      getNFTsEndpoint: "/api/getAllNFTs"
+    };
+
     // ============================================ //
-    // PALĪGFUNKCIJAS
+    // UI ELEMENTU KARTE
     // ============================================ //
-    function showStatus(msg, isError = false) {
-      statusMsg.textContent = msg;
-      statusMsg.style.color = isError ? '#ff6666' : '#0f0';
-      console.log(msg);
-      setTimeout(() => {
-        if (statusMsg.textContent === msg) statusMsg.style.color = '#fff';
-      }, 3000);
-    }
-    
+    const UI = {
+      connectBtn: document.getElementById('connectBtn'),
+      renderBtn: document.getElementById('renderBtn'),
+      recordBtn: document.getElementById('recordBtn'),
+      generateNFTBtn: document.getElementById('generateNFTBtn'),
+      mintBtn: document.getElementById('mintBtn'),
+      accountDisplay: document.getElementById('accountDisplay'),
+      recordTimer: document.getElementById('recordTimer'),
+      statusMsg: document.getElementById('statusMsg'),
+      progressBarContainer: document.getElementById('progressBarContainer'),
+      progressBar: document.getElementById('progressBar'),
+      tokenListContainer: document.getElementById('tokenListContainer'),
+      tokenListContent: document.getElementById('tokenListContent'),
+      ipfsPreview: document.getElementById('ipfsPreview'),
+      previewImage: document.getElementById('previewImage'),
+      previewVideo: document.getElementById('previewVideo'),
+      previewMetadata: document.getElementById('previewMetadata'),
+      styleIndicator: document.getElementById('styleIndicator'),
+      indicatorText: document.getElementById('indicatorText'),
+      warningBanner: document.getElementById('warningBanner'),
+      canvas: document.getElementById('snapshotCanvas'),
+      fullscreenIcon: document.getElementById('fullscreenIcon'),
+      toggleInfoIcon: document.getElementById('toggleInfoIcon'),
+      adminPanel: document.getElementById('adminPanel'),
+      collectionNameInput: document.getElementById('collectionNameInput'),
+      mintPriceSelect: document.getElementById('mintPriceSelect'),
+      baseURIInput: document.getElementById('baseURIInput'),
+      collectionAddressDisplay: document.getElementById('collectionAddressDisplay'),
+      ownerAddressDisplay: document.getElementById('ownerAddressDisplay'),
+      createCollectionBtn: document.getElementById('createCollectionBtn'),
+      saveNameBtn: document.getElementById('saveNameBtn'),
+      savePriceBtn: document.getElementById('savePriceBtn'),
+      saveURIBtn: document.getElementById('saveURIBtn'),
+      copyAddressBtn: document.getElementById('copyAddressBtn')
+    };
+
     // ============================================ //
-    // SAVIENOŠANA AR MAKU
+    // APP OBJECT
     // ============================================ //
-    async function connectWallet() {
-      if (!window.ethereum) {
-        alert('Please install MetaMask!');
-        return;
-      }
+    const App = {
+      provider: null,
+      signer: null,
+      account: null,
+      showInfo: true,
+      tokens: [],
+      ethBalance: 0,
+      txCount: 0,
+      particles: [],
+      initialParticles: [],
+      animRequest: null,
+      currentAddonStyle: 'classic',
+      frameCount: 0,
+      isRecording: false,
+      lastImageURL: null,
+      lastVideoURL: null,
+      lastMetadataURL: null,
       
-      try {
-        provider = new ethers.BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = await provider.getSigner();
-        userAddress = await signer.getAddress();
+      // NFT līguma dati
+      factoryContract: null,
+      userNFTContract: null,
+      userNFTAddress: null,
+      isOwner: false,
+      
+      // NFT Gravity - centrālie punkti
+      nftCenters: [],
+      
+      getCanvasDimensions() {
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 3);
+        let width = 1920;
+        let height = 1080;
+        if (isMobile) {
+          width = Math.min(1080, window.innerWidth * dpr);
+          height = Math.min(720, window.innerHeight * dpr);
+        }
+        return { width, height, dpr, isMobile };
+      },
+      
+      resizeCanvas() {
+        const { width, height, dpr, isMobile } = this.getCanvasDimensions();
+        const scale = isMobile ? 0.5 : 1;
+        UI.canvas.width = Math.round(width * scale);
+        UI.canvas.height = Math.round(height * scale);
+        UI.canvas.style.width = '100%';
+        UI.canvas.style.height = 'auto';
+        const ctx = UI.canvas.getContext('2d');
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr * scale, dpr * scale);
+      },
+      
+      cleanup() {
+        if (this.animRequest) {
+          cancelAnimationFrame(this.animRequest);
+          this.animRequest = null;
+        }
+        this.particles = [];
+        this.initialParticles = [];
+        this.nftCenters = [];
+        const ctx = UI.canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, UI.canvas.width, UI.canvas.height);
+        }
+      },
+      
+      showWarning(message, show = true) {
+        if (UI.warningBanner) {
+          UI.warningBanner.textContent = message;
+          if (show) UI.warningBanner.classList.add('show');
+          else UI.warningBanner.classList.remove('show');
+        }
+      },
+      
+      showToast(message, type = 'info') {
+        UI.statusMsg.textContent = message;
+        console.log(`[${type}] ${message}`);
+      },
+      
+      showProgress() { UI.progressBarContainer.style.display = 'block'; UI.progressBar.style.transform = 'scaleX(0)'; },
+      hideProgress() { 
+        UI.progressBar.style.transform = 'scaleX(1)'; 
+        setTimeout(() => { 
+          UI.progressBarContainer.style.display = 'none'; 
+          UI.progressBar.style.transform = 'scaleX(0)'; 
+        }, 500); 
+      },
+      setProgress(percent) { UI.progressBar.style.transform = `scaleX(${percent / 100})`; },
+      
+      setButtonLoading(button, isLoading) { 
+        if (isLoading) { button.classList.add('loading'); button.disabled = true; } 
+        else { button.classList.remove('loading'); button.disabled = false; } 
+      },
+      
+      // Tēmas
+      ADDON_STYLES: {
+        classic: { name: 'CLASSIC', displayName: '⭐ CLASSIC', color: '#0ff',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ hue, sat, light }),
+          drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => {},
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ hue, sat, light, alpha }),
+          indicatorText: '⭐ CLASSIC MODE - Original visualization' },
+        forest: { name: 'FOREST', displayName: '🌲 FOREST', color: '#0f0',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ hue: (hue + 120) % 360, sat: Math.min(100, sat + 20), light: light - 10 }),
+          drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => { ctx.save(); ctx.globalCompositeOperation = 'lighter'; particles.forEach(p => { const cx = cx0 + Math.cos(p.angle) * p.radius; const cy = cy0 + Math.sin(p.angle) * p.radius; ctx.beginPath(); ctx.arc(cx, cy, p.r * 1.8, 0, Math.PI * 2); ctx.fillStyle = `rgba(0, 255, 0, 0.15)`; ctx.fill(); }); ctx.restore(); },
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ hue: (hue + 120) % 360, sat: Math.min(100, sat + 20), light: light - 10, alpha: alpha * 0.8 }),
+          indicatorText: '🌲 FOREST MODE - Green glow effect active' },
+        ocean: { name: 'OCEAN', displayName: '🌊 OCEAN', color: '#00f',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ hue: (hue + 200) % 360, sat: Math.min(100, sat + 15), light: light + 5 }),
+          drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => { ctx.save(); ctx.globalAlpha = 0.25; for(let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(W/2 + Math.sin(frame * 0.02 + i) * 50, H/2 + Math.cos(frame * 0.015 + i) * 30, 100 + i * 30, 0, Math.PI * 2); ctx.strokeStyle = `rgba(0, 100, 255, ${0.15 - i * 0.02})`; ctx.stroke(); } ctx.restore(); },
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ hue: (hue + 200) % 360, sat: Math.min(100, sat + 15), light: light + 5, alpha: alpha * 0.9 }),
+          indicatorText: '🌊 OCEAN MODE - Wave animations active' },
+        sunset: { name: 'SUNSET', displayName: '🌅 SUNSET', color: '#ff6600',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ hue: (hue + 30) % 360, sat: Math.min(100, sat + 25), light: light + 15 }),
+          drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => { ctx.save(); const gradient = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, 350); gradient.addColorStop(0, 'rgba(255, 100, 0, 0.2)'); gradient.addColorStop(0.5, 'rgba(255, 50, 0, 0.1)'); gradient.addColorStop(1, 'rgba(255, 100, 0, 0)'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, W, H); ctx.restore(); },
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ hue: (hue + 30) % 360, sat: Math.min(100, sat + 25), light: light + 15, alpha: alpha * 1.1 }),
+          indicatorText: '🌅 SUNSET MODE - Warm fire glow active' },
+        galaxy: { name: 'GALAXY', displayName: '✨ GALAXY', color: '#c026ff',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ hue: (hue + 280) % 360, sat: Math.min(100, sat + 30), light: light + 10 }),
+          drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => { ctx.save(); for(let i = 0; i < 60; i++) { const x = (Math.sin(frame * 0.01 + i) * 0.5 + 0.5) * W; const y = (Math.cos(frame * 0.008 + i * 2) * 0.5 + 0.5) * H; ctx.beginPath(); ctx.arc(x, y, 1.5 + Math.sin(frame * 0.05 + i) * 0.8, 0, Math.PI * 2); ctx.fillStyle = `rgba(200, 100, 255, ${0.3 + Math.sin(frame * 0.03 + i) * 0.2})`; ctx.fill(); } ctx.restore(); },
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ hue: (hue + 280) % 360, sat: Math.min(100, sat + 30), light: light + 10, alpha: alpha * 0.85 }),
+          indicatorText: '✨ GALAXY MODE - Sparkle stars active' },
+        rainbow: { name: 'RAINBOW', displayName: '🌈 RAINBOW', color: '#ff00ff',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ hue: (hue + idx * 15 + frameCount * 2) % 360, sat: 100, light: 70 }),
+          drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => { ctx.save(); ctx.globalCompositeOperation = 'lighter'; particles.forEach((p, i) => { const pulse = Math.sin(frame * 0.05 + i) * 0.4 + 0.5; const cx = cx0 + Math.cos(p.angle) * p.radius; const cy = cy0 + Math.sin(p.angle) * p.radius; ctx.beginPath(); ctx.arc(cx, cy, p.r * (1 + pulse * 0.6), 0, Math.PI * 2); ctx.fillStyle = `hsla(${(p.hue + frame) % 360}, 100%, 70%, ${pulse * 0.3})`; ctx.fill(); }); ctx.restore(); },
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ hue: (hue + frameCount * 2) % 360, sat: 100, light: 70, alpha: alpha * 0.7 }),
+          indicatorText: '🌈 RAINBOW MODE - Color pulse active' },
+        fire: { name: 'FIRE', displayName: '🔥 FIRE', color: '#ff4400',
+          particleColorModifier: (hue, sat, light, idx, balanceFactor, frameCount) => ({ hue: (hue + 15) % 360, sat: Math.min(100, sat + 40), light: light + 20 }),
+          drawExtraEffects: (ctx, W, H, frame, particles, cx0, cy0) => { ctx.save(); ctx.globalCompositeOperation = 'screen'; particles.forEach(p => { const trailX = cx0 + Math.cos(p.angle - p.speed * 12) * p.radius; const trailY = cy0 + Math.sin(p.angle - p.speed * 12) * p.radius; ctx.beginPath(); ctx.moveTo(trailX, trailY); const cx = cx0 + Math.cos(p.angle) * p.radius; const cy = cy0 + Math.sin(p.angle) * p.radius; ctx.lineTo(cx, cy); ctx.lineWidth = p.r * 1.2; ctx.strokeStyle = `rgba(255, 80, 0, 0.5)`; ctx.stroke(); }); ctx.restore(); },
+          connectionColorModifier: (hue, sat, light, alpha, frameCount) => ({ hue: (hue + 15) % 360, sat: Math.min(100, sat + 40), light: light + 20, alpha: alpha * 1.2 }),
+          indicatorText: '🔥 FIRE MODE - Fire trail effects active' }
+      },
+      
+      setAddonStyle(styleName) {
+        this.currentAddonStyle = styleName;
+        const style = this.ADDON_STYLES[styleName];
+        UI.styleIndicator.style.borderLeftColor = style.color;
+        UI.indicatorText.innerHTML = style.indicatorText;
+        UI.styleIndicator.style.transform = 'scale(1.05)';
+        setTimeout(() => { UI.styleIndicator.style.transform = 'scale(1)'; }, 300);
+        if (this.initialParticles.length > 0 && this.animRequest) {
+          this.stopAnimation();
+          this.particles = this.cloneParticles();
+          this.animate();
+        }
+      },
+      
+      hashStringToInt(str, mod = 1000) { 
+        let h = 2166136261 >>> 0; 
+        for (let i = 0; i < str.length; i++) {
+          h ^= str.charCodeAt(i);
+          h = Math.imul(h, 16777619) >>> 0;
+        } 
+        return h % mod; 
+      },
+      
+      seededRandomFloat(seedStr) { 
+        return this.hashStringToInt(seedStr, 10000) / 10000; 
+      },
+      
+      updateNFTCenters() {
+        this.nftCenters = [];
+        const nftTokens = this.tokens.filter(t => t.isNFT);
+        const { width: W, height: H } = UI.canvas;
+        const cx0 = W / 2, cy0 = H / 2;
         
-        accountDisplay.textContent = `Connected: ${userAddress.substring(0, 10)}...${userAddress.substring(38)}`;
+        nftTokens.forEach((nft, idx) => {
+          const angle = this.seededRandomFloat(nft.address + 'position') * Math.PI * 2;
+          const radius = 80 + this.seededRandomFloat(nft.address + 'radius') * 150;
+          this.nftCenters.push({
+            x: cx0 + Math.cos(angle) * radius,
+            y: cy0 + Math.sin(angle) * radius,
+            radius: 15,
+            influence: 0.02,
+            token: nft
+          });
+        });
+      },
+      
+      updateTokenListUI() {
+        if(!this.tokens || this.tokens.length === 0){ 
+          UI.tokenListContent.innerHTML = '<tr><td colspan="2" style="color:#777;">No assets<\/td><\/tr>'; 
+          return; 
+        }
+        UI.tokenListContent.innerHTML = '';
+        this.tokens.forEach(t => {
+          const tr = document.createElement('tr');
+          const addrTd = document.createElement('td'); 
+          addrTd.textContent = t.address; 
+          addrTd.title = t.address;
+          const balTd = document.createElement('td'); 
+          balTd.textContent = t.isNFT ? t.balance : t.balance.toFixed(4);
+          tr.appendChild(addrTd); tr.appendChild(balTd);
+          UI.tokenListContent.appendChild(tr);
+        });
+      },
+      
+      showIPFSPreview(imageURL, videoURL, metadataURL) {
+        UI.previewImage.innerHTML = ''; UI.previewVideo.innerHTML = ''; UI.previewMetadata.innerHTML = '';
+        if (imageURL) UI.previewImage.innerHTML = `🖼️ Image: <a href="${imageURL.http}" target="_blank">${imageURL.ipfs}</a>`;
+        if (videoURL) UI.previewVideo.innerHTML = `🎬 Video: <a href="${videoURL.http}" target="_blank">${videoURL.ipfs}</a>`;
+        if (metadataURL) UI.previewMetadata.innerHTML = `📄 Metadata: <a href="${metadataURL.http}" target="_blank">${metadataURL.ipfs}</a>`;
+        UI.ipfsPreview.style.display = 'block';
+        setTimeout(() => { UI.ipfsPreview.style.display = 'none'; }, 10000);
+      },
+      
+      async getTokens() {
+        if (!this.account) return [];
+        this.showProgress();
+        try {
+          const url = `${SDK_SETTINGS.getTokensEndpoint}?account=${encodeURIComponent(this.account)}`;
+          const res = await fetch(url);
+          if (!res.ok) return [];
+          const data = await res.json();
+          if (!data?.result?.tokenBalances) return [];
+          return data.result.tokenBalances.map(t => {
+            const decimals = t.decimals != null ? Number(t.decimals) : 18;
+            const balance = Number(ethers.formatUnits(t.tokenBalance || "0x0", decimals));
+            const address = (t.contractAddress || "").toLowerCase();
+            return { address, balance, symbol: t.symbol || address, isNFT: false };
+          }).filter(t => t.balance > 0);
+        } catch(e) { console.error(e); return []; } finally { this.hideProgress(); }
+      },
+      
+      async getAllNFTs() {
+        if (!this.account) return [];
+        this.showProgress();
+        try {
+          const url = `${SDK_SETTINGS.getNFTsEndpoint}?account=${encodeURIComponent(this.account)}`;
+          const res = await fetch(url);
+          if (!res.ok) return [];
+          const data = await res.json();
+          let nfts = [];
+          if (data?.result?.nfts) nfts = data.result.nfts;
+          else if (data?.nfts) nfts = data.nfts;
+          else if (Array.isArray(data)) nfts = data;
+          if (!nfts || !nfts.length) return [];
+          return nfts.map(nft => ({
+            address: nft.contract?.address || nft.contractAddress || nft.address || '',
+            symbol: nft.contract?.symbol || nft.symbol || 'NFT',
+            balance: 1,
+            isNFT: true,
+            tokenId: nft.id?.tokenId || nft.tokenId || nft.id || ''
+          }));
+        } catch(e) { console.error(e); return []; } finally { this.hideProgress(); }
+      },
+      
+      // ============================================ //
+      // FACTORY LIGUMA FUNKCIJAS
+      // ============================================ //
+      async checkUserCollection() {
+        if (!this.factoryContract) return;
         
-        // Izveido Factory līguma instanci
-        factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
-        
-        // Pārbauda vai lietotājam jau ir kolekcija
-        await checkUserCollection();
-        
-        renderBtn.disabled = false;
-        recordBtn.disabled = false;
-        
-        showStatus(`✅ Connected: ${userAddress.substring(0, 10)}...`);
-      } catch (err) {
-        console.error(err);
-        showStatus('❌ Connection failed', true);
-      }
-    }
-    
-    // ============================================ //
-    // PĀRBAUDI VAI LIETOTĀJAM IR KOLEKCIJA
-    // ============================================ //
-    async function checkUserCollection() {
-      try {
-        userNFTAddress = await factoryContract.getMyCollection();
-        
-        if (userNFTAddress && userNFTAddress !== "0x0000000000000000000000000000000000000000") {
-          userNFTContract = new ethers.Contract(userNFTAddress, NFT_ABI, signer);
-          collectionAddressDisplay.textContent = userNFTAddress;
+        try {
+          this.userNFTAddress = await this.factoryContract.getMyCollection();
           
-          // Pārbauda vai lietotājs ir īpašnieks
-          const contractOwner = await userNFTContract.owner();
-          isOwner = (contractOwner.toLowerCase() === userAddress.toLowerCase());
-          
-          if (isOwner) {
-            adminPanel.style.display = 'block';
-            mintBtn.disabled = false;
-            ownerAddressDisplay.textContent = userAddress;
+          if (this.userNFTAddress && this.userNFTAddress !== "0x0000000000000000000000000000000000000000") {
+            this.userNFTContract = new ethers.Contract(this.userNFTAddress, NFT_ABI, this.signer);
+            UI.collectionAddressDisplay.textContent = this.userNFTAddress;
             
-            // Ielādē pašreizējos iestatījumus
-            await loadContractSettings();
-            showStatus('✅ Your collection is ready!');
+            const contractOwner = await this.userNFTContract.owner();
+            this.isOwner = (contractOwner.toLowerCase() === this.account.toLowerCase());
+            
+            if (this.isOwner) {
+              UI.adminPanel.style.display = 'block';
+              UI.mintBtn.disabled = false;
+              UI.ownerAddressDisplay.textContent = this.account;
+              await this.loadContractSettings();
+              this.showToast('✅ Your collection is ready!');
+            } else {
+              UI.mintBtn.disabled = false;
+              UI.adminPanel.style.display = 'none';
+              this.showToast('✅ Collection found! You can mint NFTs.');
+            }
           } else {
-            mintBtn.disabled = false;
-            showStatus('✅ Collection found! You can mint NFTs.');
+            UI.adminPanel.style.display = 'block';
+            UI.mintBtn.disabled = true;
+            this.showToast('⚠️ No collection yet. Click "CREATE MY NFT COLLECTION"');
           }
-        } else {
-          // Nav kolekcijas - rāda izveides pogu tikai īpašniekam (šajā gadījumā - lietotājam)
-          // Bet pagaidām - jebkurš var izveidot
-          adminPanel.style.display = 'block';
-          showStatus('⚠️ No collection yet. Click "CREATE MY NFT COLLECTION"');
+        } catch (err) {
+          console.error("Check collection error:", err);
+          UI.adminPanel.style.display = 'block';
         }
-      } catch (err) {
-        console.error("Check collection error:", err);
-        adminPanel.style.display = 'block';
-      }
-    }
-    
-    // ============================================ //
-    // IELĀDĒ KONTRAKTA IESTATĪJUMUS
-    // ============================================ //
-    async function loadContractSettings() {
-      if (!userNFTContract) return;
+      },
       
-      try {
-        const name = await userNFTContract.collectionName();
-        const price = await userNFTContract.mintPrice();
-        collectionNameInput.value = name;
-        mintPriceSelect.value = ethers.formatEther(price);
-      } catch (err) {
-        console.error("Load settings error:", err);
-      }
-    }
-    
-    // ============================================ //
-    // IZVEIDOT KOLEKCIJU
-    // ============================================ //
-    async function createCollection() {
-      if (!factoryContract) {
-        showStatus('Please connect wallet first!', true);
-        return;
-      }
-      
-      const name = collectionNameInput.value || "My NFT Collection";
-      const symbol = name.substring(0, 6).toUpperCase().replace(/[^A-Z]/g, '');
-      const baseURI = baseURIInput.value || "https://ipfs.io/ipfs/QmExample/";
-      
-      showStatus('🚀 Creating your NFT collection... Please confirm in MetaMask');
-      
-      try {
-        const tx = await factoryContract.createCollection(name, symbol, baseURI);
-        await tx.wait();
+      async loadContractSettings() {
+        if (!this.userNFTContract) return;
         
-        showStatus('✅ Collection created! Refreshing...');
-        await checkUserCollection();
-      } catch (err) {
-        console.error(err);
-        showStatus('❌ Failed to create collection: ' + err.message, true);
-      }
-    }
-    
-    // ============================================ //
-    // SAGLABĀT IESTATĪJUMUS
-    // ============================================ //
-    async function saveCollectionName() {
-      if (!userNFTContract || !isOwner) return;
-      try {
-        const tx = await userNFTContract.setCollectionName(collectionNameInput.value);
-        await tx.wait();
-        showStatus('✅ Collection name updated!');
-      } catch (err) {
-        showStatus('❌ Failed: ' + err.message, true);
-      }
-    }
-    
-    async function saveMintPrice() {
-      if (!userNFTContract || !isOwner) return;
-      try {
-        const priceInWei = ethers.parseEther(mintPriceSelect.value);
-        const tx = await userNFTContract.setMintPrice(priceInWei);
-        await tx.wait();
-        showStatus('✅ Mint price updated!');
-      } catch (err) {
-        showStatus('❌ Failed: ' + err.message, true);
-      }
-    }
-    
-    async function saveBaseURI() {
-      if (!userNFTContract || !isOwner) return;
-      try {
-        const tx = await userNFTContract.setBaseURI(baseURIInput.value);
-        await tx.wait();
-        showStatus('✅ Base URI updated!');
-      } catch (err) {
-        showStatus('❌ Failed: ' + err.message, true);
-      }
-    }
-    
-    // ============================================ //
-    // MINT NFT
-    // ============================================ //
-    async function mintNFT() {
-      if (!userNFTContract) {
-        showStatus('No collection found! Create one first.', true);
-        return;
-      }
+        try {
+          const name = await this.userNFTContract.collectionName();
+          const price = await this.userNFTContract.mintPrice();
+          if (UI.collectionNameInput) UI.collectionNameInput.value = name;
+          if (UI.mintPriceSelect) UI.mintPriceSelect.value = ethers.formatEther(price);
+        } catch (err) {
+          console.error("Load settings error:", err);
+        }
+      },
       
-      try {
-        const price = await userNFTContract.mintPrice();
-        const priceEth = ethers.formatEther(price);
-        
-        showStatus(`🔄 Minting NFT for ${priceEth} ETH... Confirm in MetaMask`);
-        
-        const tx = await userNFTContract.mint(userAddress, { value: price });
-        await tx.wait();
-        
-        showStatus(`✅ NFT Minted! Token ID: ${(await userNFTContract.totalSupply()) - 1}`);
-      } catch (err) {
-        console.error(err);
-        showStatus('❌ Mint failed: ' + err.message, true);
-      }
-    }
-    
-    // ============================================ //
-    // VIZUALIZĀCIJA (vienkāršota versija)
-    // ============================================ //
-    function drawVisualization() {
-      const ctx = canvas.getContext('2d');
-      const w = canvas.width;
-      const h = canvas.height;
-      
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, w, h);
-      
-      // Vienkārša daļiņu animācija
-      const time = Date.now() / 1000;
-      const cx = w/2, cy = h/2;
-      
-      for (let i = 0; i < 50; i++) {
-        const angle = i * 0.125 + time;
-        const radius = 100 + Math.sin(time * 0.5 + i) * 50;
-        const x = cx + Math.cos(angle) * radius;
-        const y = cy + Math.sin(angle) * radius;
-        
-        let hue;
-        switch(currentTheme) {
-          case 'forest': hue = 120; break;
-          case 'ocean': hue = 200; break;
-          case 'sunset': hue = 30; break;
-          case 'galaxy': hue = 280; break;
-          case 'rainbow': hue = (time * 50 + i * 36) % 360; break;
-          case 'fire': hue = 15; break;
-          default: hue = 180;
+      async createCollection() {
+        if (!this.factoryContract) {
+          this.showToast('Please connect wallet first!', true);
+          return;
         }
         
-        ctx.beginPath();
-        ctx.arc(x, y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
-        ctx.fill();
+        const name = UI.collectionNameInput?.value || "My NFT Collection";
+        const symbol = name.substring(0, 6).toUpperCase().replace(/[^A-Z]/g, 'M');
+        const baseURI = UI.baseURIInput?.value || "https://ipfs.io/ipfs/QmExample/";
+        
+        this.showToast('🚀 Creating your NFT collection... Confirm in MetaMask');
+        
+        try {
+          const tx = await this.factoryContract.createCollection(name, symbol, baseURI);
+          await tx.wait();
+          this.showToast('✅ Collection created! Refreshing...');
+          await this.checkUserCollection();
+          await this.renderSnapshot();
+        } catch (err) {
+          console.error(err);
+          this.showToast('❌ Failed: ' + err.message, true);
+        }
+      },
+      
+      async saveCollectionName() {
+        if (!this.userNFTContract || !this.isOwner) return;
+        try {
+          const tx = await this.userNFTContract.setCollectionName(UI.collectionNameInput.value);
+          await tx.wait();
+          this.showToast('✅ Collection name updated!');
+        } catch (err) {
+          this.showToast('❌ Failed: ' + err.message, true);
+        }
+      },
+      
+      async saveMintPrice() {
+        if (!this.userNFTContract || !this.isOwner) return;
+        try {
+          const priceInWei = ethers.parseEther(UI.mintPriceSelect.value);
+          const tx = await this.userNFTContract.setMintPrice(priceInWei);
+          await tx.wait();
+          this.showToast('✅ Mint price updated!');
+        } catch (err) {
+          this.showToast('❌ Failed: ' + err.message, true);
+        }
+      },
+      
+      async saveBaseURI() {
+        if (!this.userNFTContract || !this.isOwner) return;
+        try {
+          const tx = await this.userNFTContract.setBaseURI(UI.baseURIInput.value);
+          await tx.wait();
+          this.showToast('✅ Base URI updated!');
+        } catch (err) {
+          this.showToast('❌ Failed: ' + err.message, true);
+        }
+      },
+      
+      async mintNFT() {
+        if (!this.userNFTContract) {
+          this.showToast('No collection found! Create one first.', true);
+          return;
+        }
+        
+        try {
+          const price = await this.userNFTContract.mintPrice();
+          const priceEth = ethers.formatEther(price);
+          
+          this.showToast(`🔄 Minting NFT for ${priceEth} ETH... Confirm in MetaMask`);
+          
+          const tx = await this.userNFTContract.mint(this.account, { value: price });
+          await tx.wait();
+          
+          const supply = await this.userNFTContract.totalSupply();
+          this.showToast(`✅ NFT Minted! Token ID: ${Number(supply) - 1}`);
+          
+          await this.renderSnapshot();
+        } catch (err) {
+          console.error(err);
+          this.showToast('❌ Mint failed: ' + err.message, true);
+        }
+      },
+      
+      async connectWallet() {
+        this.setButtonLoading(UI.connectBtn, true);
+        this.showProgress();
+        try {
+          if (window.ethereum) {
+            this.provider = new ethers.BrowserProvider(window.ethereum);
+            await this.provider.send("eth_requestAccounts", []);
+            this.signer = await this.provider.getSigner();
+            this.account = await this.signer.getAddress();
+            const network = await this.provider.getNetwork();
+            const expectedNetwork = SDK_SETTINGS.network === 'sepolia' ? 11155111n : 1n;
+            if (network.chainId !== expectedNetwork) {
+              this.showToast(`Please switch to ${SDK_SETTINGS.network} network!`, 'warning');
+            }
+            
+            this.factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, this.signer);
+            
+          } else { alert('Please install MetaMask!'); return; }
+          
+          UI.accountDisplay.textContent = 'Connected account: ' + this.account;
+          const balance = await this.provider.getBalance(this.account);
+          this.ethBalance = Number(ethers.formatEther(balance));
+          
+          await this.checkUserCollection();
+          
+          UI.renderBtn.disabled = false;
+          UI.recordBtn.disabled = false;
+          UI.generateNFTBtn.disabled = false;
+          
+          this.showToast('Wallet connected successfully!', 'success');
+        } catch (err) { console.error(err); this.showToast('Connection failed', 'error'); } finally { this.setButtonLoading(UI.connectBtn, false); this.hideProgress(); }
+      },
+      
+      async uploadFileToIPFS(file) {
+        if (SDK_SETTINGS.customUploader && typeof SDK_SETTINGS.customUploader === 'function') {
+          return await SDK_SETTINGS.customUploader(file);
+        }
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch(SDK_SETTINGS.ipfsEndpoint, { method: 'POST', body: formData });
+        if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
+        return await response.json();
+      },
+      
+      async uploadMetadataToIPFS(metadata) {
+        if (SDK_SETTINGS.customMetadataUploader && typeof SDK_SETTINGS.customMetadataUploader === 'function') {
+          return await SDK_SETTINGS.customMetadataUploader(metadata);
+        }
+        const response = await fetch(SDK_SETTINGS.ipfsMetadataEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metadata })
+        });
+        if (!response.ok) throw new Error(`Metadata upload failed: ${response.status}`);
+        return await response.json();
+      },
+      
+      async uploadImageToIPFS() {
+        this.showToast('Converting image...', 'info');
+        return new Promise((resolve, reject) => {
+          UI.canvas.toBlob(async (blob) => {
+            if (!blob) { reject(new Error('Failed to convert canvas')); return; }
+            const file = new File([blob], `snapshot_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            try { 
+              this.showToast('Uploading image to IPFS...', 'info'); 
+              resolve(await this.uploadFileToIPFS(file)); 
+            } catch (error) { reject(error); }
+          }, 'image/jpeg', 0.85);
+        });
+      },
+      
+      async uploadVideoToIPFS(duration = 5000) {
+        this.showToast('Recording video...', 'info');
+        const stream = UI.canvas.captureStream(30);
+        let mimeType = 'video/mp4';
+        if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+        const recorder = new MediaRecorder(stream, { mimeType });
+        const chunks = [];
+        return new Promise((resolve, reject) => {
+          recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+          recorder.onstop = async () => {
+            const ext = mimeType === 'video/mp4' ? 'mp4' : 'webm';
+            const blob = new Blob(chunks, { type: mimeType });
+            const file = new File([blob], `video_${Date.now()}.${ext}`, { type: mimeType });
+            try { 
+              this.showToast('Uploading video to IPFS...', 'info'); 
+              resolve(await this.uploadFileToIPFS(file)); 
+            } catch (error) { reject(error); }
+          };
+          recorder.onerror = (err) => reject(err);
+          recorder.start();
+          setTimeout(() => { if (recorder.state === 'recording') recorder.stop(); }, duration);
+        });
+      },
+      
+      async generateNFT() {
+        if (!this.account || !this.provider || !this.signer) { 
+          this.showToast('Connect wallet first', 'warning');
+          return; 
+        }
+        const userConfirmed = confirm(`Create NFT from your visualization?\n\nImage and video will be uploaded to IPFS.\n\nFee: ${SDK_SETTINGS.mintFee} ETH + gas\n\nDo you want to continue?`);
+        if (!userConfirmed) { this.showToast('Cancelled', 'info'); return; }
+
+        this.setButtonLoading(UI.generateNFTBtn, true);
+        this.showProgress();
+        this.setProgress(10);
+        
+        try {
+          const imageResult = await this.uploadImageToIPFS();
+          this.lastImageURL = imageResult;
+          this.setProgress(30);
+          
+          let videoResult = null;
+          try { 
+            videoResult = await this.uploadVideoToIPFS(5000); 
+            this.lastVideoURL = videoResult; 
+            this.setProgress(50);
+          } catch (error) { 
+            console.warn('Video upload failed:', error); 
+            this.showToast('Video upload failed, continuing without video', 'warning');
+          }
+          
+          const metadata = {
+            name: "Wallet Visualization NFT",
+            description: `Generated from wallet ${this.account.substring(0, 10)}... on ${new Date().toISOString()}`,
+            image: imageResult.ipfs,
+            attributes: [
+              { trait_type: "ETH Balance", value: this.ethBalance.toString() },
+              { trait_type: "Token Count", value: this.tokens.length.toString() },
+              { trait_type: "Transaction Count", value: this.txCount.toString() },
+              { trait_type: "Visual Style", value: this.ADDON_STYLES[this.currentAddonStyle].name },
+              { trait_type: "Generated At", value: new Date().toISOString() }
+            ]
+          };
+          if (videoResult) metadata.animation_url = videoResult.ipfs;
+          this.setProgress(70);
+          
+          const metadataResult = await this.uploadMetadataToIPFS(metadata);
+          this.lastMetadataURL = metadataResult;
+          this.setProgress(85);
+          
+          this.showIPFSPreview(imageResult, videoResult, metadataResult);
+          this.setProgress(100);
+          
+          this.showToast('✅ Files uploaded to IPFS! Ready for minting.', 'success');
+          alert(`✅ Files uploaded to IPFS!\n\nImage: ${imageResult.http}\nVideo: ${videoResult ? videoResult.http : 'N/A'}\nMetadata: ${metadataResult.http}\n\nMint fee: ${SDK_SETTINGS.mintFee} ETH`);
+          
+        } catch (error) {
+          console.error(error);
+          this.showToast(`Error: ${error.message.substring(0, 100)}`, 'error');
+          alert(`NFT preparation failed: ${error.message}`);
+        } finally { 
+          this.setButtonLoading(UI.generateNFTBtn, false); 
+          this.hideProgress(); 
+        }
+      },
+      
+      async initParticlesOnce() {
+        this.initialParticles = [];
+        const particleCount = Math.min(120, 40 + (this.tokens.filter(t => !t.isNFT).length || 0) * 10);
+        const seedBase = (this.account || '') + String(this.ethBalance) + String(this.txCount);
+        
+        this.updateNFTCenters();
+        
+        for (let i = 0; i < particleCount; i++) {
+          const tokenIndex = i % (this.tokens.length || 1);
+          const t = this.tokens.length ? this.tokens[tokenIndex] : { balance: 1, address: String(i), symbol: 'T', isNFT: false };
+          const balanceFactor = t.isNFT ? 1 : Math.min(t.balance || 0, 20) / 20;
+          
+          let hue = this.hashStringToInt((t.address || '') + seedBase + i) % 360;
+          const ethFactor = Math.min(this.ethBalance / 10, 1);
+          hue = (hue + ethFactor * 100) % 360;
+          
+          const txSpeedFactor = Math.min(1 + Math.log(this.txCount + 1) / 15, 2.0);
+          const speedBase = 0.003 + 0.008 * (this.hashStringToInt((t.symbol || t.address) + seedBase + i, 10) / 10);
+          const speed = speedBase * txSpeedFactor;
+          
+          const r = t.isNFT ? 12 : 2 + 5 * balanceFactor;
+          const angle = this.seededRandomFloat(seedBase + i + 'angle') * 2 * Math.PI;
+          const radius = 60 + this.seededRandomFloat(seedBase + i + 'radius') * 380;
+          
+          this.initialParticles.push({ 
+            angle, radius, r, hue, speed, 
+            angleVelocity: speed,
+            token: t, balanceFactor,
+            x: 0, y: 0
+          });
+        }
+      },
+      
+      cloneParticles() { 
+        return this.initialParticles.map(p => ({ ...p, x: 0, y: 0 })); 
+      },
+      
+      drawFrame(frame, showTokensFrame) {
+        this.frameCount = frame;
+        const addon = this.ADDON_STYLES[this.currentAddonStyle];
+        const { width: W, height: H } = UI.canvas;
+        const ctx = UI.canvas.getContext('2d');
+        
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, W, H);
+        
+        const cx0 = W / 2, cy0 = H / 2;
+        
+        for (let i = 0; i < this.particles.length; i++) {
+          const p = this.particles[i];
+          
+          let gravityDelta = { x: 0, y: 0 };
+          for (const nft of this.nftCenters) {
+            const dx = nft.x - (p.x || 0);
+            const dy = nft.y - (p.y || 0);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 0 && dist < 250) {
+              const txFactor = Math.min(1 + Math.log(this.txCount + 1) / 15, 2.0);
+              const force = nft.influence * (1 - dist / 250) * txFactor;
+              gravityDelta.x += dx * force;
+              gravityDelta.y += dy * force;
+            }
+          }
+          
+          const txSpeedFactor = Math.min(1 + Math.log(this.txCount + 1) / 15, 2.0);
+          p.angleVelocity = (p.angleVelocity || p.speed) + (gravityDelta.x + gravityDelta.y) * 0.0005;
+          p.angleVelocity = Math.min(Math.max(p.angleVelocity, 0.001), 0.025);
+          p.angle += p.angleVelocity * txSpeedFactor;
+          
+          p.x = cx0 + Math.cos(p.angle) * p.radius;
+          p.y = cy0 + Math.sin(p.angle) * p.radius;
+        }
+        
+        for (let i = 0; i < this.particles.length; i++) {
+          const p1 = this.particles[i];
+          const x1 = p1.x;
+          const y1 = p1.y;
+          
+          for (let j = i + 1; j < this.particles.length; j++) {
+            const p2 = this.particles[j];
+            const x2 = p2.x;
+            const y2 = p2.y;
+            const dx = x1 - x2;
+            const dy = y1 - y2;
+            
+            if (Math.abs(dx) > 130 || Math.abs(dy) > 130) continue;
+            
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 130 && dist > 0) {
+              const avgBalance = (Math.min(p1.token.balance, 20) + Math.min(p2.token.balance, 20)) / 40;
+              let alpha = 0.15 + 0.35 * avgBalance * (1 - dist / 130);
+              ctx.lineWidth = 1.2 + 1.8 * avgBalance;
+              let hue = (p1.hue + p2.hue) / 2 + frame * 0.3;
+              const modified = addon.connectionColorModifier(hue, 100, 70, alpha, this.frameCount);
+              ctx.strokeStyle = `hsla(${modified.hue}, ${modified.sat}%, ${modified.light}%, ${modified.alpha})`;
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(x2, y2);
+              ctx.stroke();
+            }
+          }
+        }
+        
+        for (let idx = 0; idx < this.particles.length; idx++) {
+          const p = this.particles[idx];
+          const cx = p.x;
+          const cy = p.y;
+          const modified = addon.particleColorModifier(p.hue, 100, 70, idx, p.balanceFactor, this.frameCount);
+          
+          const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, p.r * 2.2);
+          gradient.addColorStop(0, `hsla(${modified.hue}, ${modified.sat}%, ${modified.light + 12}%, 1)`);
+          gradient.addColorStop(0.6, `hsla(${modified.hue}, ${modified.sat}%, ${modified.light}%, 0.9)`);
+          gradient.addColorStop(1, `hsla(${modified.hue + 20}, ${modified.sat}%, ${modified.light - 15}%, 0.4)`);
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(cx, cy, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        for (const nft of this.nftCenters) {
+          ctx.beginPath();
+          ctx.arc(nft.x, nft.y, 8, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 215, 0, 0.3)`;
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(nft.x, nft.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 215, 0, 0.8)`;
+          ctx.fill();
+        }
+        
+        addon.drawExtraEffects(ctx, W, H, frame, this.particles, cx0, cy0);
+        
+        if (showTokensFrame && this.showInfo) {
+          ctx.fillStyle = '#0ff';
+          ctx.font = '20px Inter';
+          ctx.fillText(`ETH: ${this.ethBalance.toFixed(4)}`, 15, 70);
+          ctx.font = '14px Inter';
+          ctx.fillStyle = addon.color;
+          ctx.fillText(`${addon.displayName} ACTIVE`, 15, 100);
+          ctx.font = '11px Inter';
+          ctx.fillStyle = '#888';
+          ctx.fillText(`TX count: ${this.txCount} | NFTs: ${this.nftCenters.length}`, 15, 125);
+        }
+      },
+      
+      animate(frame = 0) { 
+        this.drawFrame(frame, true); 
+        this.animRequest = requestAnimationFrame(() => this.animate(frame + 1)); 
+      },
+      
+      stopAnimation() { 
+        if (this.animRequest) cancelAnimationFrame(this.animRequest); 
+        this.animRequest = null; 
+      },
+      
+      async renderSnapshot() {
+        if (!this.account) await this.connectWallet();
+        if (!this.provider || !this.account) { this.showToast('Wallet not connected', 'warning'); return; }
+
+        this.setButtonLoading(UI.renderBtn, true);
+        this.stopAnimation();
+        this.cleanup();
+        this.showProgress();
+        UI.progressBar.style.transform = 'scaleX(0)';
+        this.showToast('Loading wallet data...', 'info');
+
+        const steps = [
+          { name: 'ETH balance', func: async () => { this.ethBalance = Number(ethers.formatEther(await this.provider.getBalance(this.account))) || 0; }},
+          { name: 'Transaction count', func: async () => { this.txCount = Number(await this.provider.getTransactionCount(this.account)) || 0; }},
+          { name: 'ERC-20 tokens', func: async () => { this.tokens = await this.getTokens(); }},
+          { name: 'NFTs', func: async () => { 
+              const nfts = await this.getAllNFTs();
+              this.tokens = [...this.tokens, ...nfts];
+              this.updateNFTCenters();
+            }},
+          { name: 'Visualization', func: async () => { await this.initParticlesOnce(); this.particles = this.cloneParticles(); }}
+        ];
+
+        let currentStep = 0, totalSteps = steps.length;
+        let visualProgress = 0, running = true;
+
+        const animateProgress = () => {
+          if (!running) return;
+          const targetProgress = currentStep / totalSteps;
+          visualProgress += (targetProgress - visualProgress) * 0.05;
+          UI.progressBar.style.transform = `scaleX(${visualProgress})`;
+          requestAnimationFrame(animateProgress);
+        };
+        requestAnimationFrame(animateProgress);
+
+        try {
+          for (const step of steps) {
+            this.showToast(step.name + '...', 'info');
+            await step.func();
+            currentStep++;
+          }
+          if (this.showInfo) { UI.tokenListContainer.style.display = 'block'; this.updateTokenListUI(); }
+          running = false;
+          UI.progressBar.style.transform = 'scaleX(1)';
+          this.showToast(`Ready - ${this.tokens.length} assets found`, 'success');
+          this.hideProgress();
+          this.animate();
+        } catch (e) {
+          running = false;
+          this.hideProgress();
+          console.error(e);
+          this.showToast('Render failed: ' + e.message, 'error');
+        } finally { this.setButtonLoading(UI.renderBtn, false); }
+      },
+      
+      pickSupportedMimeType() {
+        const candidates = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+        for (const c of candidates) { try { if (MediaRecorder.isTypeSupported(c)) return c; } catch (e) {} }
+        return '';
+      },
+      
+      async startRecording() {
+        if (this.isRecording) return;
+        this.isRecording = true;
+        const previousShowInfo = this.showInfo;
+        
+        this.showWarning('⚠️ Please do not close this tab while recording video! ⚠️', true);
+        
+        this.setButtonLoading(UI.recordBtn, true);
+        this.showInfo = false;
+        UI.tokenListContainer.style.display = 'block';
+        this.stopAnimation();
+        this.particles = this.cloneParticles();
+        this.drawFrame(0, true);
+        this.showToast('Preparing...', 'info');
+        UI.renderBtn.disabled = true;
+        UI.connectBtn.disabled = true;
+        UI.generateNFTBtn.disabled = true;
+        this.showProgress();
+        if (!this.animRequest) this.animate();
+
+        let stream;
+        try { stream = UI.canvas.captureStream(30); } catch (err) { this.showToast('Not supported', 'error'); this.cleanupRecording(previousShowInfo); return; }
+
+        const mime = this.pickSupportedMimeType();
+        let recorder;
+        try { recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); } catch (err) { alert('Recording not available'); this.cleanupRecording(previousShowInfo); return; }
+
+        const chunks = [];
+        recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+        recorder.onerror = (ev) => { console.error(ev); this.showToast('Error', 'error'); };
+        recorder.onstart = () => { this.showToast('Recording...', 'info'); };
+        recorder.start();
+
+        const startTime = performance.now(), duration = 20000;
+        const updateProgress = (timestamp) => {
+          const elapsed = timestamp - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          UI.progressBar.style.transform = `scaleX(${progress})`;
+          const seconds = Math.floor(elapsed / 1000);
+          UI.recordTimer.textContent = `Recording: ${seconds} / 20 s`;
+          if (elapsed < duration) requestAnimationFrame(updateProgress);
+          else try { recorder.stop(); } catch (e) {}
+        };
+        requestAnimationFrame(updateProgress);
+
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: chunks.length ? chunks[0].type : 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+          a.download = `visualization_${Date.now()}.${ext}`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+          this.showInfo = previousShowInfo;
+          UI.tokenListContainer.style.display = this.showInfo ? 'block' : 'none';
+          this.updateTokenListUI();
+          this.showToast('Recording finished', 'success');
+          UI.recordTimer.textContent = 'Recording: 0 / 20 s';
+          this.hideProgress();
+          this.setButtonLoading(UI.recordBtn, false);
+          UI.renderBtn.disabled = false;
+          UI.connectBtn.disabled = false;
+          UI.generateNFTBtn.disabled = false;
+          this.isRecording = false;
+          this.showWarning('', false);
+        };
+      },
+      
+      cleanupRecording(previousShowInfo) {
+        this.showInfo = previousShowInfo;
+        UI.tokenListContainer.style.display = this.showInfo ? 'block' : 'none';
+        this.updateTokenListUI();
+        this.setButtonLoading(UI.recordBtn, false);
+        UI.renderBtn.disabled = false;
+        UI.connectBtn.disabled = false;
+        UI.generateNFTBtn.disabled = false;
+        this.hideProgress();
+        UI.recordTimer.textContent = 'Recording: 0 / 20 s';
+        this.isRecording = false;
+        this.showWarning('', false);
+      },
+      
+      init() {
+        this.resizeCanvas();
+        
+        UI.connectBtn.addEventListener('click', () => this.connectWallet());
+        UI.renderBtn.addEventListener('click', () => this.renderSnapshot());
+        UI.generateNFTBtn.addEventListener('click', () => this.generateNFT());
+        UI.recordBtn.addEventListener('click', () => this.startRecording());
+        UI.mintBtn.addEventListener('click', () => this.mintNFT());
+        UI.createCollectionBtn.addEventListener('click', () => this.createCollection());
+        UI.saveNameBtn.addEventListener('click', () => this.saveCollectionName());
+        UI.savePriceBtn.addEventListener('click', () => this.saveMintPrice());
+        UI.saveURIBtn.addEventListener('click', () => this.saveBaseURI());
+        
+        UI.copyAddressBtn.addEventListener('click', () => {
+          if (this.userNFTAddress) {
+            navigator.clipboard.writeText(this.userNFTAddress);
+            this.showToast('📋 Address copied!');
+          }
+        });
+        
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.setAddonStyle(btn.getAttribute('data-theme'));
+          });
+        });
+        
+        UI.fullscreenIcon.addEventListener('click', () => { 
+          if (!document.fullscreenElement) UI.canvas.requestFullscreen().catch(() => {}); 
+          else document.exitFullscreen().catch(() => {}); 
+        });
+        
+        UI.toggleInfoIcon.addEventListener('click', () => { 
+          this.showInfo = !this.showInfo; 
+          UI.tokenListContainer.style.display = this.showInfo ? 'block' : 'none'; 
+          if (this.showInfo) this.updateTokenListUI(); 
+        });
+        
+        window.addEventListener('resize', () => this.resizeCanvas());
       }
-    }
+    };
     
-    function animate() {
-      drawVisualization();
-      requestAnimationFrame(animate);
-    }
-    
-    // ============================================ //
-    // TĒMAS
-    // ============================================ //
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentTheme = btn.getAttribute('data-theme');
-      });
-    });
-    
-    // ============================================ //
-    // NOTIKUMI
-    // ============================================ //
-    connectBtn.addEventListener('click', connectWallet);
-    createCollectionBtn.addEventListener('click', createCollection);
-    saveNameBtn.addEventListener('click', saveCollectionName);
-    savePriceBtn.addEventListener('click', saveMintPrice);
-    saveURIBtn.addEventListener('click', saveBaseURI);
-    mintBtn.addEventListener('click', mintNFT);
-    
-    copyAddressBtn.addEventListener('click', () => {
-      if (userNFTAddress) {
-        navigator.clipboard.writeText(userNFTAddress);
-        showStatus('📋 Address copied!');
-      }
-    });
-    
-    fullscreenBtn.addEventListener('click', () => {
-      if (canvas.requestFullscreen) canvas.requestFullscreen();
-    });
-    
-    renderBtn.addEventListener('click', () => {
-      showStatus('🎨 Visualization active!');
-      animate();
-    });
-    
-    recordBtn.addEventListener('click', () => {
-      showStatus('📹 Recording not implemented in this demo');
-    });
-    
-    // Sākotnējais canvasa izmērs
-    canvas.width = 800;
-    canvas.height = 450;
-    drawVisualization();
-    animate();
-    
+    App.init();
   </script>
 </body>
 </html>
